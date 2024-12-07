@@ -1,0 +1,39 @@
+## MCQ 1
+Question: What is a variable in programming?
+A) A fixed value that cannot be changed.
+B) A reserved word with special meaning to the compiler.
+C) The name of a memory location that stores data.
+D) A line of code that is ignored by the compiler.
+Correct Answer: C
+
+## MCQ 2
+Which of the following is NOT a valid rule for variable naming in C (as described in the text)?
+A) Variables are case-sensitive.
+B) The first character must be an alphabet or an underscore.
+C) Variables can contain commas or blank spaces.
+D) Variables cannot contain symbols other than underscores.
+Correct Answer: C
+
+## MCQ 3
+What is the purpose of the `printf` function in C?
+A) To get input from the user.
+B) To display output to the console.
+C) To compile the C code into machine code.
+D) To define a variable.
+Correct Answer: B
+
+## MCQ 4
+What data type would you typically use to store the value of Pi (3.14159)?
+A) Integer
+B) Character
+C) Real/Floating-point
+D) Keyword
+Correct Answer: C
+
+## MCQ 5
+What does a C compiler do?
+A) Executes a C program directly.
+B) Translates C code into machine code.
+C) Displays the output of a C program.
+D) Creates comments in a C program.
+Correct Answer: B
