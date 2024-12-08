@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:fl_chart/fl_chart.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:intl/intl.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -15,6 +16,7 @@ class _AdminHomeState extends State<AdminHome> {
   String? selectedDisease;
   List<Map<String, dynamic>> lineChartData = [];
   int totalDiseases = 0;
+  final _secureStorage = const FlutterSecureStorage();
 
   @override
   void initState() {
@@ -23,10 +25,30 @@ class _AdminHomeState extends State<AdminHome> {
   }
 
   Future<Map<String, int>> fetchPatientDataFromSupabase() async {
+    final adminId = await _secureStorage.read(key: 'adminId');
+    if (adminId == null) {
+      throw Exception('Admin ID not found in secure storage');
+    }
+
+    // Fetch sub_dist for the admin
+    final adminResponse = await Supabase.instance.client
+        .from('admin')
+        .select('sub_dist')
+        .eq('id', adminId)
+        .maybeSingle();
+
+    if (adminResponse == null || adminResponse['sub_dist'] == null) {
+      throw Exception('Sub-district not found for admin');
+    }
+
+    final adminSubDist = adminResponse['sub_dist'] as String;
+
+    // Filter diseases data based on sub_dist
     final eightDaysAgo = DateTime.now().subtract(const Duration(days: 8));
     final response = await Supabase.instance.client
         .from('diseases')
-        .select('disease, created_at')
+        .select('disease, created_at, sub_dist')
+        .eq('sub_dist', adminSubDist)
         .gte('created_at', eightDaysAgo.toIso8601String());
 
     final data = response as List<dynamic>;
@@ -43,11 +65,31 @@ class _AdminHomeState extends State<AdminHome> {
   }
 
   Future<List<Map<String, dynamic>>> fetchDiseaseTrend(String disease) async {
+    final adminId = await _secureStorage.read(key: 'adminId');
+    if (adminId == null) {
+      throw Exception('Admin ID not found in secure storage');
+    }
+
+    // Fetch sub_dist for the admin
+    final adminResponse = await Supabase.instance.client
+        .from('admin')
+        .select('sub_dist')
+        .eq('id', adminId)
+        .maybeSingle();
+
+    if (adminResponse == null || adminResponse['sub_dist'] == null) {
+      throw Exception('Sub-district not found for admin');
+    }
+
+    final adminSubDist = adminResponse['sub_dist'] as String;
+
+    // Filter trend data based on sub_dist and disease
     final eightDaysAgo = DateTime.now().subtract(const Duration(days: 8));
     final response = await Supabase.instance.client
         .from('diseases')
         .select('created_at')
         .eq('disease', disease)
+        .eq('sub_dist', adminSubDist)
         .gte('created_at', eightDaysAgo.toIso8601String())
         .order('created_at', ascending: true);
 

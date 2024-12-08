@@ -1,4 +1,5 @@
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:sih/screens/admin/dist_state/ds_admin_main.dart';
 import 'package:sih/screens/admin/sub_dist/admin_main_screen.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:flutter/material.dart';
@@ -27,24 +28,24 @@ class _AdminLoginScreenState extends State<AdminLoginScreen> {
       try {
         final supabase = Supabase.instance.client;
 
-        // Query the database for the hospital with the given email
+        // Query the database for the admin with the given email
         final response = await supabase
             .from('admin')
-            .select('password, id')
+            .select('password, id, role')
             .eq('email', email)
             .maybeSingle();
 
         if (response == null) {
-          // No hospital found with that email
+          // No admin found with that email
           _showErrorDialog("No admin detail found with that email.");
           return;
         }
 
         final dbPassword = response['password'];
-
-        // Check if the status is true (active)
+        final role = response['role'];
 
         if (password == dbPassword) {
+          // Save admin ID in secure storage
           await _secureStorage.write(
               key: 'adminId', value: response['id'].toString());
 
@@ -53,11 +54,34 @@ class _AdminLoginScreenState extends State<AdminLoginScreen> {
             const SnackBar(content: Text('Login successful!')),
           );
 
-          Navigator.pushAndRemoveUntil(
-            context,
-            MaterialPageRoute(builder: (context) => const AdminMainScreen()),
-            (route) => false, // Removes all previous routes
-          );
+          // Navigate based on role
+          if (role == 'sub_dist') {
+            await _secureStorage.write(
+                key: 'adminId', value: response['id'].toString());
+            await _secureStorage.write(
+                key: 'role', value: response['role'].toString());
+            Navigator.pushAndRemoveUntil(
+              context,
+              MaterialPageRoute(
+                builder: (context) => const AdminMainScreen(),
+              ), // Replace with Sub-Dist role screen
+              (route) => false,
+            );
+          } else if (role == 'dist' || role == 'state') {
+            await _secureStorage.write(
+                key: 'adminId', value: response['id'].toString());
+            await _secureStorage.write(
+                key: 'role', value: response['role'].toString());
+            Navigator.pushAndRemoveUntil(
+              context,
+              MaterialPageRoute(
+                builder: (context) => const DsAdminMain(),
+              ), // Replace with Dist/State role screen
+              (route) => false,
+            );
+          } else {
+            _showErrorDialog("Invalid role assigned.");
+          }
         } else {
           // Password mismatch
           _showErrorDialog("Invalid email or password.");

@@ -41,6 +41,7 @@ class _AdminMainScreenState extends State<AdminMainScreen> {
   Future<void> _logout(BuildContext context) async {
     // Clear user session
     await _secureStorage.delete(key: 'adminId');
+    await _secureStorage.delete(key: 'role');
 
     // Navigate to Login Screen
     Navigator.pushAndRemoveUntil(
