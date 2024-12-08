@@ -22,10 +22,10 @@ class _AuthApplySchemeState extends State<AuthApplyScheme> {
   @override
   void initState() {
     super.initState();
-    _fetchHospitals();
+    _fetchSchemes();
   }
 
-  Future<void> _fetchHospitals() async {
+  Future<void> _fetchSchemes() async {
     setState(() {
       _isLoading = true;
     });
@@ -54,7 +54,8 @@ class _AuthApplySchemeState extends State<AuthApplyScheme> {
       final response = await _supabase
           .from('applied_schemes')
           .select()
-          .eq('sub_dist', adminSubDist);
+          .eq('sub_dist', adminSubDist)
+          .eq('status', false);
 
       setState(() {
         _appliedSchemes = (response as List<dynamic>)
@@ -122,7 +123,7 @@ class _AuthApplySchemeState extends State<AuthApplyScheme> {
         print('No phone number found.');
       }
 
-      _fetchHospitals(); // Refresh the list
+      _fetchSchemes(); // Refresh the list
     } catch (e) {
       _showError("Error verifying hospital: $e");
     }
@@ -154,13 +155,10 @@ class _AuthApplySchemeState extends State<AuthApplyScheme> {
                           Text(request['name'] ?? 'Unknown Name'),
                           const Spacer(),
                           const SizedBox(width: 5),
-                          request['status'] == true
-                              ? const Icon(Icons.check, color: Colors.green)
-                              : ElevatedButton(
-                                  onPressed: () =>
-                                      _verifySchemes(request['id']),
-                                  child: const Text('Verify'),
-                                ),
+                          ElevatedButton(
+                            onPressed: () => _verifySchemes(request['id']),
+                            child: const Text('Verify'),
+                          ),
                         ],
                       ),
                     ),
