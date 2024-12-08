@@ -1,30 +1,30 @@
 import 'package:flutter/material.dart';
-import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
-import 'package:intl/intl.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:intl/intl.dart';
+import 'package:fl_chart/fl_chart.dart';
 
-class AdminHome extends StatefulWidget {
-  const AdminHome({Key? key}) : super(key: key);
+class AdminScheme extends StatefulWidget {
+  const AdminScheme({Key? key}) : super(key: key);
 
   @override
-  State<AdminHome> createState() => _AdminHomeState();
+  State<AdminScheme> createState() => _AdminSchemeState();
 }
 
-class _AdminHomeState extends State<AdminHome> {
-  late Future<Map<String, int>> _patientDataFuture;
-  String? selectedDisease;
+class _AdminSchemeState extends State<AdminScheme> {
+  late Future<Map<String, int>> _schemeDataFuture;
+  String? selectedScheme;
   List<Map<String, dynamic>> lineChartData = [];
-  int totalDiseases = 0;
+  int totalSchemes = 0;
   final _secureStorage = const FlutterSecureStorage();
 
   @override
   void initState() {
     super.initState();
-    _patientDataFuture = fetchPatientDataFromSupabase();
+    _schemeDataFuture = fetchSchemeDataFromSupabase();
   }
 
-  Future<Map<String, int>> fetchPatientDataFromSupabase() async {
+  Future<Map<String, int>> fetchSchemeDataFromSupabase() async {
     final adminId = await _secureStorage.read(key: 'adminId');
     if (adminId == null) {
       throw Exception('Admin ID not found in secure storage');
@@ -43,28 +43,28 @@ class _AdminHomeState extends State<AdminHome> {
 
     final adminSubDist = adminResponse['sub_dist'] as String;
 
-    // Filter diseases data based on sub_dist
+    // Fetch schemes data for the last 8 days
     final eightDaysAgo = DateTime.now().subtract(const Duration(days: 8));
     final response = await Supabase.instance.client
-        .from('diseases')
-        .select('disease, created_at, sub_dist')
+        .from('applied_schemes') // Change to the appropriate table name
+        .select('scheme_name, created_at, sub_dist')
         .eq('sub_dist', adminSubDist)
         .gte('created_at', eightDaysAgo.toIso8601String());
 
     final data = response as List<dynamic>;
 
-    Map<String, int> diseaseCount = {};
+    Map<String, int> schemeCount = {};
     for (var entry in data) {
-      final disease = entry['disease'] as String;
-      diseaseCount[disease] = (diseaseCount[disease] ?? 0) + 1;
+      final scheme = entry['scheme_name'] as String;
+      schemeCount[scheme] = (schemeCount[scheme] ?? 0) + 1;
     }
 
-    totalDiseases = diseaseCount.values.fold(0, (sum, count) => sum + count);
+    totalSchemes = schemeCount.values.fold(0, (sum, count) => sum + count);
 
-    return diseaseCount;
+    return schemeCount;
   }
 
-  Future<List<Map<String, dynamic>>> fetchDiseaseTrend(String disease) async {
+  Future<List<Map<String, dynamic>>> fetchSchemeTrend(String scheme) async {
     final adminId = await _secureStorage.read(key: 'adminId');
     if (adminId == null) {
       throw Exception('Admin ID not found in secure storage');
@@ -83,27 +83,30 @@ class _AdminHomeState extends State<AdminHome> {
 
     final adminSubDist = adminResponse['sub_dist'] as String;
 
-    // Filter trend data based on sub_dist and disease
+    // Filter trend data based on sub_dist and scheme
     final eightDaysAgo = DateTime.now().subtract(const Duration(days: 8));
     final response = await Supabase.instance.client
-        .from('diseases')
+        .from('applied_schemes') // Adjust table name here if needed
         .select('created_at')
-        .eq('disease', disease)
+        .eq('scheme_name', scheme)
         .eq('sub_dist', adminSubDist)
         .gte('created_at', eightDaysAgo.toIso8601String())
         .order('created_at', ascending: true);
 
     final data = response as List<dynamic>;
 
+    // Prepare date range for the last 8 days
     Map<String, int> trendData = {};
     DateTime startDate = DateTime.now().subtract(const Duration(days: 8));
 
+    // Initialize trend data map with 0 counts for each day
     for (int i = 0; i <= 8; i++) {
       final date =
           startDate.add(Duration(days: i)).toIso8601String().split('T').first;
       trendData[date] = 0;
     }
 
+    // Count occurrences for each date in the fetched data
     for (var entry in data) {
       final date = (entry['created_at'] as String).split('T').first;
       trendData[date] = (trendData[date] ?? 0) + 1;
@@ -122,7 +125,7 @@ class _AdminHomeState extends State<AdminHome> {
         child: Padding(
           padding: const EdgeInsets.all(8.0),
           child: FutureBuilder<Map<String, int>>(
-            future: _patientDataFuture,
+            future: _schemeDataFuture,
             builder: (context, snapshot) {
               if (snapshot.connectionState == ConnectionState.waiting) {
                 return const Center(child: CircularProgressIndicator());
@@ -132,7 +135,7 @@ class _AdminHomeState extends State<AdminHome> {
                 return const Center(child: Text('No data available'));
               } else {
                 final data = snapshot.data!;
-                final sortedDiseases = data.entries.toList()
+                final sortedSchemes = data.entries.toList()
                   ..sort((a, b) => b.value.compareTo(a.value));
                 return Padding(
                   padding: const EdgeInsets.all(16.0),
@@ -158,20 +161,20 @@ class _AdminHomeState extends State<AdminHome> {
                               ),
                               const SizedBox(height: 8),
                               Text(
-                                'Total Patients Recorded: $totalDiseases',
+                                'Total Schemes Recorded: $totalSchemes',
                                 style: const TextStyle(
                                     fontSize: 16, color: Colors.black54),
                               ),
                               const SizedBox(height: 8),
                               const Text(
-                                'Most Prevalent Diseases:',
+                                'Most Prevalent Schemes:',
                                 style: TextStyle(
                                     fontSize: 16, color: Colors.black54),
                               ),
                               const SizedBox(height: 8),
                               Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
-                                children: sortedDiseases
+                                children: sortedSchemes
                                     .take(3)
                                     .map((e) => Text(
                                           '${e.key}: ${e.value}',
@@ -187,22 +190,24 @@ class _AdminHomeState extends State<AdminHome> {
                       ),
                       const SizedBox(height: 16),
 
-                      // Trending Diseases
+                      // Trending Schemes
                       const Text(
-                        'Trending Diseases',
+                        'Trending Schemes',
                         style: TextStyle(
                             fontSize: 20,
                             fontWeight: FontWeight.bold,
                             color: Colors.black87),
                       ),
                       const SizedBox(height: 16),
-                      DiseasesChart(diseaseData: data),
+                      SchemesChart(
+                        schemeData: data,
+                      ),
                       const SizedBox(height: 16),
 
                       // Divider
                       const Divider(),
                       const Text(
-                        'Disease Trend',
+                        'Scheme Trend',
                         style: TextStyle(
                             fontSize: 20,
                             fontWeight: FontWeight.bold,
@@ -214,25 +219,25 @@ class _AdminHomeState extends State<AdminHome> {
                       Padding(
                         padding: const EdgeInsets.only(left: 10, right: 10),
                         child: DropdownButton<String>(
-                          hint: const Text('Select a disease'),
-                          value: selectedDisease,
+                          hint: const Text('Select a scheme'),
+                          value: selectedScheme,
                           isExpanded: true,
                           onChanged: (value) async {
                             if (value != null) {
                               setState(() {
-                                selectedDisease = value;
+                                selectedScheme = value;
                               });
                               final trendData =
-                                  await fetchDiseaseTrend(selectedDisease!);
+                                  await fetchSchemeTrend(selectedScheme!);
                               setState(() {
                                 lineChartData = trendData;
                               });
                             }
                           },
                           items: data.keys
-                              .map((disease) => DropdownMenuItem(
-                                    value: disease,
-                                    child: Text(disease),
+                              .map((scheme) => DropdownMenuItem(
+                                    value: scheme,
+                                    child: Text(scheme),
                                   ))
                               .toList(),
                         ),
@@ -248,14 +253,14 @@ class _AdminHomeState extends State<AdminHome> {
                                       size: 48, color: Colors.grey),
                                   SizedBox(height: 8),
                                   Text(
-                                    'Select a disease to view the trend',
+                                    'Select a scheme to view the trend',
                                     style: TextStyle(
                                         color: Colors.black54, fontSize: 16),
                                   ),
                                 ],
                               ),
                             )
-                          : DiseaseLineChart(data: lineChartData),
+                          : SchemeLineChart(data: lineChartData),
                     ],
                   ),
                 );
@@ -268,22 +273,13 @@ class _AdminHomeState extends State<AdminHome> {
   }
 }
 
-class DiseasesChart extends StatelessWidget {
-  final Map<String, int> diseaseData;
+class SchemesChart extends StatelessWidget {
+  final Map<String, int> schemeData;
 
-  const DiseasesChart({Key? key, required this.diseaseData}) : super(key: key);
+  const SchemesChart({Key? key, required this.schemeData}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
-    // Prepare the data for the line chart
-    // ignore: unused_local_variable
-    final lineChartSpots = diseaseData.entries
-        .map((e) => FlSpot(
-              diseaseData.keys.toList().indexOf(e.key).toDouble(),
-              e.value.toDouble(),
-            ))
-        .toList();
-
     return SizedBox(
       height: 300,
       child: BarChart(
@@ -310,11 +306,11 @@ class DiseasesChart extends StatelessWidget {
               sideTitles: SideTitles(
                 showTitles: true,
                 getTitlesWidget: (double value, TitleMeta meta) {
-                  final disease = diseaseData.keys.toList()[value.toInt()];
+                  final scheme = schemeData.keys.toList()[value.toInt()];
                   return SideTitleWidget(
                     axisSide: meta.axisSide,
                     child: Text(
-                      disease,
+                      scheme,
                       style: const TextStyle(fontSize: 10),
                     ),
                   );
@@ -328,10 +324,10 @@ class DiseasesChart extends StatelessWidget {
               sideTitles: SideTitles(showTitles: false),
             ),
           ),
-          barGroups: diseaseData.entries
+          barGroups: schemeData.entries
               .map(
                 (e) => BarChartGroupData(
-                  x: diseaseData.keys.toList().indexOf(e.key),
+                  x: schemeData.keys.toList().indexOf(e.key),
                   barRods: [
                     BarChartRodData(
                       toY: e.value.toDouble(),
@@ -353,10 +349,10 @@ class DiseasesChart extends StatelessWidget {
   }
 }
 
-class DiseaseLineChart extends StatelessWidget {
+class SchemeLineChart extends StatelessWidget {
   final List<Map<String, dynamic>> data;
 
-  const DiseaseLineChart({Key? key, required this.data}) : super(key: key);
+  const SchemeLineChart({Key? key, required this.data}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {

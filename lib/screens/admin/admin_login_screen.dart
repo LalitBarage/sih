@@ -45,10 +45,6 @@ class _AdminLoginScreenState extends State<AdminLoginScreen> {
         final role = response['role'];
 
         if (password == dbPassword) {
-          // Save admin ID in secure storage
-          await _secureStorage.write(
-              key: 'adminId', value: response['id'].toString());
-
           // Login successful
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(content: Text('Login successful!')),

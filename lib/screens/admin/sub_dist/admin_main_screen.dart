@@ -3,6 +3,7 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:iconsax/iconsax.dart';
 import 'package:sih/landing_page.dart';
 import 'package:sih/screens/admin/sub_dist/admin_home.dart';
+import 'package:sih/screens/admin/sub_dist/admin_report.dart';
 import 'package:sih/screens/admin/sub_dist/auth_apply_scheme.dart';
 import 'package:sih/screens/admin/sub_dist/auth_hospitals.dart';
 
@@ -22,14 +23,14 @@ class _AdminMainScreenState extends State<AdminMainScreen> {
     AdminHome(),
     AuthHospitals(),
     AuthApplyScheme(),
-    Center(child: Text('Campaign')),
+    AdminScheme(),
   ];
 
   static const List<String> _pagesTitle = <String>[
     'Home',
     'Requested Hospital',
     'Requested Patient',
-    'Report',
+    'Growth',
   ];
 
   void _onItemTapped(int index) {
@@ -118,8 +119,8 @@ class _AdminMainScreenState extends State<AdminMainScreen> {
             label: 'Scheme',
           ),
           BottomNavigationBarItem(
-            icon: Icon(Iconsax.document_1),
-            label: 'Report',
+            icon: Icon(Iconsax.trend_up),
+            label: 'Growth',
           ),
         ],
       ),
