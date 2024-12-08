@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:sih/screens/admin/admin_login_screen.dart';
+import 'package:sih/screens/admin/dist_state/ds_admin_main.dart';
 import 'package:sih/screens/admin/sub_dist/admin_main_screen.dart';
 import 'package:sih/screens/hospital/login_screen.dart';
 import 'package:sih/screens/hospital/main_screen.dart';
@@ -48,14 +49,24 @@ class _LandingPageState extends State<LandingPage> {
 
     try {
       final adminId = await _secureStorage.read(key: 'adminId');
+      final role = await _secureStorage.read(key: 'role');
 
       if (adminId != null) {
-        // Navigate to MainScreen if logged in
-        Navigator.pushAndRemoveUntil(
-          context,
-          MaterialPageRoute(builder: (context) => const AdminMainScreen()),
-          (route) => false,
-        );
+        if (role != null && role == 'sub_dist') {
+          // Navigate to MainScreen if logged in
+          Navigator.pushAndRemoveUntil(
+            context,
+            MaterialPageRoute(builder: (context) => const AdminMainScreen()),
+            (route) => false,
+          );
+        } else if (role != null && role == 'dist' || role == 'state') {
+          // Navigate to MainScreen if logged in
+          Navigator.pushAndRemoveUntil(
+            context,
+            MaterialPageRoute(builder: (context) => const DsAdminMain()),
+            (route) => false,
+          );
+        }
       } else {
         // Set _isLoading to false when checking is done
         setState(() {
