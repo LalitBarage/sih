@@ -234,6 +234,7 @@ class DiseasesChart extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     // Prepare the data for the line chart
+    // ignore: unused_local_variable
     final lineChartSpots = diseaseData.entries
         .map((e) => FlSpot(
               diseaseData.keys.toList().indexOf(e.key).toDouble(),
@@ -267,8 +268,7 @@ class DiseasesChart extends StatelessWidget {
               sideTitles: SideTitles(
                 showTitles: true,
                 getTitlesWidget: (double value, TitleMeta meta) {
-                  final disease =
-                      diseaseData.keys.toList()[value.toInt()] ?? '';
+                  final disease = diseaseData.keys.toList()[value.toInt()];
                   return SideTitleWidget(
                     axisSide: meta.axisSide,
                     child: Text(
