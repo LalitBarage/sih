@@ -2,9 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:iconsax/iconsax.dart';
 import 'package:sih/landing_page.dart';
-import 'package:sih/screens/admin/admin_home.dart';
-import 'package:sih/screens/admin/auth_apply_scheme.dart';
-import 'package:sih/screens/admin/auth_hospitals.dart';
+import 'package:sih/screens/admin/sub_dist/admin_home.dart';
+import 'package:sih/screens/admin/sub_dist/auth_apply_scheme.dart';
+import 'package:sih/screens/admin/sub_dist/auth_hospitals.dart';
 
 class AdminMainScreen extends StatefulWidget {
   const AdminMainScreen({super.key});

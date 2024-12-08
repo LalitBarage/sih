@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
-import 'package:sih/screens/admin/certificate_screen.dart';
+import 'package:sih/screens/admin/sub_dist/certificate_screen.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 class AuthHospitals extends StatefulWidget {

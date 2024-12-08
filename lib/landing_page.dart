@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:sih/screens/admin/admin_login_screen.dart';
-import 'package:sih/screens/admin/admin_main_screen.dart';
+import 'package:sih/screens/admin/sub_dist/admin_main_screen.dart';
 import 'package:sih/screens/hospital/login_screen.dart';
 import 'package:sih/screens/hospital/main_screen.dart';
 
