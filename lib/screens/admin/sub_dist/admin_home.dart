@@ -275,24 +275,16 @@ class DiseasesChart extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Prepare the data for the line chart
-    // ignore: unused_local_variable
-    final lineChartSpots = diseaseData.entries
-        .map((e) => FlSpot(
-              diseaseData.keys.toList().indexOf(e.key).toDouble(),
-              e.value.toDouble(),
-            ))
-        .toList();
-
     return SizedBox(
       height: 300,
       child: BarChart(
         BarChartData(
           gridData: const FlGridData(show: true),
           borderData: FlBorderData(
-              show: true,
-              border: const Border.symmetric(
-                  horizontal: BorderSide(color: Colors.grey))),
+            show: true,
+            border: const Border.symmetric(
+                horizontal: BorderSide(color: Colors.grey)),
+          ),
           titlesData: FlTitlesData(
             leftTitles: AxisTitles(
               sideTitles: SideTitles(
@@ -321,12 +313,10 @@ class DiseasesChart extends StatelessWidget {
                 },
               ),
             ),
-            rightTitles: const AxisTitles(
-              sideTitles: SideTitles(showTitles: false),
-            ),
-            topTitles: const AxisTitles(
-              sideTitles: SideTitles(showTitles: false),
-            ),
+            rightTitles:
+                const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+            topTitles:
+                const AxisTitles(sideTitles: SideTitles(showTitles: false)),
           ),
           barGroups: diseaseData.entries
               .map(
@@ -342,7 +332,7 @@ class DiseasesChart extends StatelessWidget {
                         end: Alignment.topCenter,
                       ),
                       borderRadius: BorderRadius.circular(8),
-                    )
+                    ),
                   ],
                 ),
               )
@@ -413,17 +403,15 @@ class DiseaseLineChart extends StatelessWidget {
                 },
               ),
             ),
-            rightTitles: const AxisTitles(
-              sideTitles: SideTitles(showTitles: false),
-            ),
-            topTitles: const AxisTitles(
-              sideTitles: SideTitles(showTitles: false),
-            ),
+            rightTitles:
+                const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+            topTitles:
+                const AxisTitles(sideTitles: SideTitles(showTitles: false)),
           ),
           lineBarsData: [
             LineChartBarData(
               isCurved: true,
-              color: Colors.blue,
+              color: Colors.blue, // Solid color for the line
               spots: filteredData
                   .map((e) => FlSpot(
                         filteredData.indexOf(e).toDouble(),
@@ -437,7 +425,7 @@ class DiseaseLineChart extends StatelessWidget {
                   begin: Alignment.topCenter,
                   end: Alignment.bottomCenter,
                 ),
-              ),
+              ), // Add gradient below the line
             ),
           ],
         ),

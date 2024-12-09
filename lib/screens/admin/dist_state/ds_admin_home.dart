@@ -314,6 +314,11 @@ class DiseasesChart extends StatelessWidget {
                   toY: entry.value.toDouble(),
                   color: Colors.blue,
                   width: 15,
+                  gradient: const LinearGradient(
+                    colors: [Colors.blue, Colors.lightBlueAccent],
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                  ),
                 ),
               ],
             );
@@ -401,6 +406,13 @@ class DiseaseLineChart extends StatelessWidget {
               isCurved: true,
               barWidth: 4,
               dotData: const FlDotData(show: true),
+              belowBarData: BarAreaData(
+                  show: false), // Optionally hide the area below the line
+              gradient: const LinearGradient(
+                colors: [Colors.green, Colors.greenAccent],
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+              ),
             ),
           ],
         ),
