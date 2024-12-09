@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:iconsax/iconsax.dart';
 import 'package:sih/landing_page.dart';
+import 'package:sih/screens/admin/dist_state/ds_admin_home.dart';
 
 class DsAdminMain extends StatefulWidget {
   const DsAdminMain({super.key});
@@ -16,7 +17,7 @@ class _DsAdminMainState extends State<DsAdminMain> {
 
   // List of pages for each tab
   static const List<Widget> _pages = <Widget>[
-    Center(child: Text('Home')),
+    DSAdminHome(),
     Center(child: Text('Alert')),
     Center(child: Text('Scheme')),
     Center(child: Text('Report')),
