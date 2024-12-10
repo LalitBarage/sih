@@ -3,6 +3,7 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:iconsax/iconsax.dart';
 import 'package:sih/landing_page.dart';
 import 'package:sih/screens/admin/dist_state/ds_admin_home.dart';
+import 'package:sih/screens/admin/dist_state/ds_admin_scheme.dart';
 
 class DsAdminMain extends StatefulWidget {
   const DsAdminMain({super.key});
@@ -19,14 +20,14 @@ class _DsAdminMainState extends State<DsAdminMain> {
   static const List<Widget> _pages = <Widget>[
     DSAdminHome(),
     Center(child: Text('Alert')),
-    Center(child: Text('Scheme')),
+    DSSchemesHome(),
     Center(child: Text('Report')),
   ];
 
   static const List<String> _pagesTitle = <String>[
-    'Home',
-    'Requested Hospital',
-    'Requested Patient',
+    'Disease Report',
+    'Alert Generation',
+    'Scheme Report',
     'Report',
   ];
 

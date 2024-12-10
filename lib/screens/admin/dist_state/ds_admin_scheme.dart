@@ -4,19 +4,19 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:intl/intl.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
-class DSAdminHome extends StatefulWidget {
-  const DSAdminHome({Key? key}) : super(key: key);
+class DSSchemesHome extends StatefulWidget {
+  const DSSchemesHome({Key? key}) : super(key: key);
 
   @override
-  State<DSAdminHome> createState() => _DSAdminHomeState();
+  State<DSSchemesHome> createState() => _DSSchemesHomeState();
 }
 
-class _DSAdminHomeState extends State<DSAdminHome> {
+class _DSSchemesHomeState extends State<DSSchemesHome> {
   late Future<List<String>> _subDistrictsFuture;
-  late Future<Map<String, int>> _patientDataFuture;
-  late Future<List<Map<String, dynamic>>> _diseaseTrendFuture;
+  late Future<Map<String, int>> _schemeDataFuture;
+  late Future<List<Map<String, dynamic>>> _schemeTrendFuture;
   String? selectedSubDistrict;
-  String? selectedDisease;
+  String? selectedScheme;
   final _secureStorage = const FlutterSecureStorage();
 
   @override
@@ -62,37 +62,37 @@ class _DSAdminHomeState extends State<DSAdminHome> {
   void loadSubDistrictData(String subDist) {
     setState(() {
       selectedSubDistrict = subDist;
-      _patientDataFuture = fetchPatientDataFromSupabase(subDist);
-      _diseaseTrendFuture = fetchDiseaseTrend(selectedDisease ?? '');
+      _schemeDataFuture = fetchSchemeDataFromSupabase(subDist);
+      _schemeTrendFuture = fetchSchemeTrend(selectedScheme ?? '');
     });
   }
 
-  Future<Map<String, int>> fetchPatientDataFromSupabase(String subDist) async {
+  Future<Map<String, int>> fetchSchemeDataFromSupabase(String subDist) async {
     final eightDaysAgo = DateTime.now().subtract(const Duration(days: 8));
     final response = await Supabase.instance.client
-        .from('diseases')
-        .select('disease, created_at')
+        .from('applied_schemes')
+        .select('scheme_name, created_at')
         .eq('sub_dist', subDist)
         .gte('created_at', eightDaysAgo.toIso8601String());
 
     final data = response as List<dynamic>;
-    Map<String, int> diseaseCount = {};
+    Map<String, int> schemeCount = {};
     for (var entry in data) {
-      final disease = entry['disease'] as String;
-      diseaseCount[disease] = (diseaseCount[disease] ?? 0) + 1;
+      final scheme = entry['scheme_name'] as String;
+      schemeCount[scheme] = (schemeCount[scheme] ?? 0) + 1;
     }
 
-    print("Disease Count: $diseaseCount");
+    print("Scheme Count: $schemeCount");
 
-    return diseaseCount;
+    return schemeCount;
   }
 
-  Future<List<Map<String, dynamic>>> fetchDiseaseTrend(String disease) async {
+  Future<List<Map<String, dynamic>>> fetchSchemeTrend(String scheme) async {
     final eightDaysAgo = DateTime.now().subtract(const Duration(days: 8));
     final response = await Supabase.instance.client
-        .from('diseases')
+        .from('applied_schemes')
         .select('created_at')
-        .eq('disease', disease)
+        .eq('scheme_name', scheme)
         .eq('sub_dist', selectedSubDistrict!)
         .gte('created_at', eightDaysAgo.toIso8601String())
         .order('created_at', ascending: true);
@@ -163,7 +163,7 @@ class _DSAdminHomeState extends State<DSAdminHome> {
                     const SizedBox(height: 16),
                     if (selectedSubDistrict != null)
                       FutureBuilder<Map<String, int>>(
-                        future: _patientDataFuture,
+                        future: _schemeDataFuture,
                         builder: (context, snapshot) {
                           if (snapshot.connectionState ==
                               ConnectionState.waiting) {
@@ -182,39 +182,39 @@ class _DSAdminHomeState extends State<DSAdminHome> {
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 const Text(
-                                  'Disease Trend',
+                                  'Scheme Trend',
                                   style: TextStyle(
                                     fontSize: 20,
                                     fontWeight: FontWeight.bold,
                                   ),
                                 ),
                                 const SizedBox(height: 16),
-                                DiseasesChart(diseaseData: data),
+                                SchemesChart(schemeData: data),
                                 const SizedBox(height: 16),
                                 DropdownButton<String>(
-                                  hint: const Text('Select a Disease'),
-                                  value: selectedDisease,
+                                  hint: const Text('Select a Scheme'),
+                                  value: selectedScheme,
                                   isExpanded: true,
                                   onChanged: (value) {
                                     if (value != null) {
                                       setState(() {
-                                        selectedDisease = value;
-                                        _diseaseTrendFuture =
-                                            fetchDiseaseTrend(value);
+                                        selectedScheme = value;
+                                        _schemeTrendFuture =
+                                            fetchSchemeTrend(value);
                                       });
                                     }
                                   },
                                   items: data.keys
-                                      .map((disease) => DropdownMenuItem(
-                                            value: disease,
-                                            child: Text(disease),
+                                      .map((scheme) => DropdownMenuItem(
+                                            value: scheme,
+                                            child: Text(scheme),
                                           ))
                                       .toList(),
                                 ),
                                 const SizedBox(height: 16),
-                                if (selectedDisease != null)
+                                if (selectedScheme != null)
                                   FutureBuilder<List<Map<String, dynamic>>>(
-                                    future: _diseaseTrendFuture,
+                                    future: _schemeTrendFuture,
                                     builder: (context, snapshot) {
                                       if (snapshot.connectionState ==
                                           ConnectionState.waiting) {
@@ -230,8 +230,7 @@ class _DSAdminHomeState extends State<DSAdminHome> {
                                             child: Text('No data available'));
                                       } else {
                                         final trendData = snapshot.data!;
-                                        return DiseaseLineChart(
-                                            data: trendData);
+                                        return SchemeLineChart(data: trendData);
                                       }
                                     },
                                   ),
@@ -251,10 +250,10 @@ class _DSAdminHomeState extends State<DSAdminHome> {
   }
 }
 
-class DiseasesChart extends StatelessWidget {
-  final Map<String, int> diseaseData;
+class SchemesChart extends StatelessWidget {
+  final Map<String, int> schemeData;
 
-  const DiseasesChart({Key? key, required this.diseaseData}) : super(key: key);
+  const SchemesChart({Key? key, required this.schemeData}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
@@ -290,7 +289,7 @@ class DiseasesChart extends StatelessWidget {
               sideTitles: SideTitles(
                 showTitles: true,
                 getTitlesWidget: (double value, TitleMeta meta) {
-                  final keys = diseaseData.keys.toList();
+                  final keys = schemeData.keys.toList();
                   if (value.toInt() >= 0 && value.toInt() < keys.length) {
                     return Text(
                       keys[value.toInt()],
@@ -305,16 +304,14 @@ class DiseasesChart extends StatelessWidget {
               ),
             ),
             rightTitles: const AxisTitles(
-              sideTitles: SideTitles(
-                showTitles: false,
-              ),
+              sideTitles: SideTitles(showTitles: false),
             ),
             topTitles: const AxisTitles(
               sideTitles: SideTitles(showTitles: false),
             ),
           ),
-          barGroups: diseaseData.entries.map((entry) {
-            final index = diseaseData.keys.toList().indexOf(entry.key);
+          barGroups: schemeData.entries.map((entry) {
+            final index = schemeData.keys.toList().indexOf(entry.key);
             return BarChartGroupData(
               x: index,
               barRods: [
@@ -327,6 +324,11 @@ class DiseasesChart extends StatelessWidget {
                     begin: Alignment.topCenter,
                     end: Alignment.bottomCenter,
                   ),
+                  // Adding titles on top of the bars
+                  rodStackItems: [
+                    BarChartRodStackItem(0, entry.value.toDouble(),
+                        Colors.transparent) // Ensure rod covers the whole bar
+                  ],
                 ),
               ],
             );
@@ -337,10 +339,10 @@ class DiseasesChart extends StatelessWidget {
   }
 }
 
-class DiseaseLineChart extends StatelessWidget {
+class SchemeLineChart extends StatelessWidget {
   final List<Map<String, dynamic>> data;
 
-  const DiseaseLineChart({Key? key, required this.data}) : super(key: key);
+  const SchemeLineChart({Key? key, required this.data}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
@@ -411,7 +413,7 @@ class DiseaseLineChart extends StatelessWidget {
                   (data[index]['count'] as int).toDouble(),
                 ),
               ),
-              isCurved: false,
+              isCurved: true,
               barWidth: 4,
               dotData: const FlDotData(show: true),
               belowBarData: BarAreaData(
