@@ -15,24 +15,8 @@ class _AddPatientScreenState extends State<AddPatientScreen> {
   final _phoneController = TextEditingController();
   final _dobController = TextEditingController();
   final _addressController = TextEditingController();
-
-  // Dropdown related variables
-  String? _selectedGender;
-  final List<String> _genders = ['Male', 'Female', 'Other'];
-
-  Future<void> _selectDate(BuildContext context) async {
-    final DateTime? pickedDate = await showDatePicker(
-      context: context,
-      initialDate: DateTime.now(),
-      firstDate: DateTime(1900),
-      lastDate: DateTime.now(),
-    );
-
-    if (pickedDate != null) {
-      _dobController.text =
-          "${pickedDate.year}-${pickedDate.month.toString().padLeft(2, '0')}-${pickedDate.day.toString().padLeft(2, '0')}";
-    }
-  }
+  final _genderController = TextEditingController();
+  final _pincodeController = TextEditingController();
 
   void _clearFields() {
     _patientNameController.clear();
@@ -40,9 +24,71 @@ class _AddPatientScreenState extends State<AddPatientScreen> {
     _phoneController.clear();
     _dobController.clear();
     _addressController.clear();
-    setState(() {
-      _selectedGender = null;
-    });
+    _genderController.clear();
+    _pincodeController.clear();
+  }
+
+  void fetchDetails() async {
+    final String phone = _phoneController.text.trim();
+    if (phone.isEmpty) {
+      _showSnackBar("Please enter a phone number");
+      return;
+    }
+
+    try {
+      final List<dynamic> response = await Supabase.instance.client
+          .from('aadhaar_api')
+          .select('id, name, dob, gender, address, adhar_no, pincode')
+          .eq('phone_no', phone);
+
+      if (response.isEmpty) {
+        _showSnackBar("No details found for this phone number");
+      } else if (response.length == 1) {
+        final user = response[0];
+        setState(() {
+          _patientNameController.text = user['name'] ?? '';
+          _dobController.text = user['dob'] ?? '';
+          _genderController.text = user['gender'] ?? '';
+          _addressController.text = user['address'] ?? '';
+          _aadhaarController.text = user['adhar_no'] ?? '';
+          _pincodeController.text = user['pincode'] ?? '';
+        });
+      } else {
+        showDialog(
+          context: context,
+          builder: (context) => AlertDialog(
+            title: const Text('Select User'),
+            content: SizedBox(
+              width: double.maxFinite,
+              child: ListView.builder(
+                shrinkWrap: true,
+                itemCount: response.length,
+                itemBuilder: (context, index) {
+                  final user = response[index];
+                  return ListTile(
+                    title: Text(user['name'] ?? 'Unknown'),
+                    subtitle: Text('Aadhaar: ${user['adhar_no'] ?? 'N/A'}'),
+                    onTap: () {
+                      setState(() {
+                        _patientNameController.text = user['name'] ?? '';
+                        _dobController.text = user['dob'] ?? '';
+                        _genderController.text = user['gender'] ?? '';
+                        _addressController.text = user['address'] ?? '';
+                        _aadhaarController.text = user['adhar_no'] ?? '';
+                        _pincodeController.text = user['pincode'] ?? '';
+                      });
+                      Navigator.of(context).pop();
+                    },
+                  );
+                },
+              ),
+            ),
+          ),
+        );
+      }
+    } catch (error) {
+      _showSnackBar("Error fetching details: $error");
+    }
   }
 
   Future<void> _submitForm() async {
@@ -56,7 +102,6 @@ class _AddPatientScreenState extends State<AddPatientScreen> {
     try {
       final supabase = Supabase.instance.client;
 
-      // Insert patient data into the database
       await supabase.from('patients').insert([
         {
           'name': _patientNameController.text.trim(),
@@ -64,16 +109,17 @@ class _AddPatientScreenState extends State<AddPatientScreen> {
           'phone_no': _phoneController.text.trim(),
           'dob': _dobController.text.trim(),
           'address': _addressController.text.trim(),
-          'gender': _selectedGender,
+          'gender': _genderController.text.trim(),
+          'pincode': _pincodeController.text.trim(),
         }
-      ]).select();
+      ]);
 
       _showSnackBar('Patient added successfully!');
       _clearFields();
     } catch (error) {
-      _showSnackBar('Error: ${error.toString()}');
+      _showSnackBar('Error: $error');
     } finally {
-      Navigator.of(context).pop();
+      if (mounted) Navigator.of(context).pop();
     }
   }
 
@@ -100,97 +146,55 @@ class _AddPatientScreenState extends State<AddPatientScreen> {
           child: SingleChildScrollView(
             child: Column(
               children: [
+                TextFormField(
+                  controller: _phoneController,
+                  decoration: const InputDecoration(
+                    labelText: 'Phone',
+                    border: OutlineInputBorder(),
+                  ),
+                  keyboardType: TextInputType.phone,
+                  validator: (value) => value != null && value.trim().isNotEmpty
+                      ? null
+                      : 'Phone is required',
+                ),
+                const SizedBox(height: 16),
+                ElevatedButton(
+                  onPressed: fetchDetails,
+                  child: const Text('Fetch Details'),
+                ),
+                const SizedBox(height: 16),
                 _buildTextField(
                   controller: _patientNameController,
                   label: 'Patient Name',
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return 'Please enter patient name';
-                    }
-                    final nameRegExp =
-                        RegExp(r"^[A-Za-zÀ-ÿáéíóúÁÉÍÓÚñÑ'’ -]+$");
-                    if (!nameRegExp.hasMatch(value)) {
-                      return 'Please enter a valid name ';
-                    }
-                    return null;
-                  },
                 ),
                 const SizedBox(height: 16),
                 _buildTextField(
                   controller: _aadhaarController,
                   label: 'Aadhaar Number',
                   maxLength: 12,
-                  keyboardType: TextInputType.number,
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return 'Please enter Aadhaar number';
-                    } else if (value.length != 12 ||
-                        !RegExp(r'^[0-9]+$').hasMatch(value)) {
-                      return 'Enter a valid 12-digit Aadhaar number';
-                    }
-                    return null;
-                  },
-                ),
-                const SizedBox(height: 16),
-                _buildTextField(
-                  controller: _phoneController,
-                  label: 'Phone Number',
-                  maxLength: 10,
-                  keyboardType: TextInputType.phone,
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return 'Please enter phone number';
-                    } else if (!RegExp(r'^[6-9]\d{9}$').hasMatch(value)) {
-                      return 'Please enter a valid 10-digit phone number';
-                    }
-                    return null;
-                  },
                 ),
                 const SizedBox(height: 16),
                 _buildTextField(
                   controller: _dobController,
                   label: 'Date of Birth',
-                  readOnly: true,
-                  suffixIcon: Icons.calendar_today,
-                  onTap: () => _selectDate(context),
-                  validator: (value) => value == null || value.isEmpty
-                      ? 'Please select date of birth'
-                      : null,
                 ),
                 const SizedBox(height: 16),
                 _buildTextField(
                   controller: _addressController,
                   label: 'Address',
                   maxLines: 3,
-                  validator: (value) => value == null || value.isEmpty
-                      ? 'Please enter address'
-                      : null,
                 ),
                 const SizedBox(height: 16),
-                // Gender Dropdown
-                DropdownButtonFormField<String>(
-                  value: _selectedGender,
-                  items: _genders.map((String gender) {
-                    return DropdownMenuItem<String>(
-                      value: gender,
-                      child: Text(gender),
-                    );
-                  }).toList(),
-                  onChanged: (String? newValue) {
-                    setState(() {
-                      _selectedGender = newValue;
-                    });
-                  },
-                  decoration: InputDecoration(
-                    labelText: "Gender",
-                    border: OutlineInputBorder(),
-                  ),
-                  validator: (value) {
-                    if (value == null) {
-                      return 'Please select gender';
-                    }
-                    return null;
-                  },
+                _buildTextField(
+                  controller: _genderController,
+                  label: 'Gender',
+                ),
+                const SizedBox(height: 16),
+                _buildTextField(
+                  controller: _pincodeController,
+                  label: 'PIN Code',
+                  maxLength: 6,
+                  keyboardType: TextInputType.number,
                 ),
                 const SizedBox(height: 16),
                 ElevatedButton(
@@ -239,6 +243,8 @@ class _AddPatientScreenState extends State<AddPatientScreen> {
     _phoneController.dispose();
     _dobController.dispose();
     _addressController.dispose();
+    _genderController.dispose();
+    _pincodeController.dispose();
     super.dispose();
   }
 }
