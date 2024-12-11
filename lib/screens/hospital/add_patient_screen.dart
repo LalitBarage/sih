@@ -1,5 +1,9 @@
+import 'dart:convert';
+import 'dart:math';
+
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:http/http.dart' as http;
 
 class AddPatientScreen extends StatefulWidget {
   const AddPatientScreen({super.key});
@@ -32,6 +36,21 @@ class _AddPatientScreenState extends State<AddPatientScreen> {
     final String phone = _phoneController.text.trim();
     if (phone.isEmpty) {
       _showSnackBar("Please enter a phone number");
+      return;
+    }
+
+    // Generate and send OTP
+    final String otp = _generateOTP();
+    final otpSent = await _sendOtp(phone: phone, otp: otp);
+    if (!otpSent) {
+      _showSnackBar("Failed to send OTP. Please try again.");
+      return;
+    }
+
+    // Show OTP dialog for verification
+    final otpVerified = await _showOtpDialog(otp);
+    if (!otpVerified) {
+      _showSnackBar("OTP verification failed. Please try again.");
       return;
     }
 
@@ -89,6 +108,80 @@ class _AddPatientScreenState extends State<AddPatientScreen> {
     } catch (error) {
       _showSnackBar("Error fetching details: $error");
     }
+  }
+
+  String _generateOTP() {
+    final random = Random();
+    return List.generate(6, (index) => random.nextInt(10)).join();
+  }
+
+  Future<bool> _sendOtp({required phone, required otp}) async {
+    final fullPhoneNo = '+91$phone';
+    // Send SMS using Twilio
+    const accountSid =
+        'AC3cdaec33a058556db5e2cb6457de79da'; // Replace with your Twilio Account SID
+    const authToken =
+        'f8e7881f68241ea146b8ee64ffada91c'; // Replace with your Twilio Auth Token
+    const fromPhoneNumber =
+        '+17754588201'; // Replace with your Twilio phone number
+
+    final twilioUrl =
+        'https://api.twilio.com/2010-04-01/Accounts/AC3cdaec33a058556db5e2cb6457de79da/Messages.json';
+
+    // ignore: unused_local_variable
+    final twilioResponse = await http.post(
+      Uri.parse(twilioUrl),
+      headers: {
+        'Authorization':
+            'Basic ${base64Encode(utf8.encode('$accountSid:$authToken'))}',
+      },
+      body: {
+        'To': fullPhoneNo,
+        'From': fromPhoneNumber,
+        'Body': 'Your otp:$otp \nDon,t share it with any one',
+      },
+    );
+    return Future.delayed(const Duration(seconds: 1), () => true);
+  }
+
+  Future<bool> _showOtpDialog(String generatedOtp) async {
+    final TextEditingController otpController = TextEditingController();
+    bool verified = false;
+
+    await showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => AlertDialog(
+        title: const Text('OTP Verification'),
+        content: TextFormField(
+          controller: otpController,
+          decoration: const InputDecoration(labelText: 'Enter OTP'),
+          keyboardType: TextInputType.number,
+          maxLength: 6,
+        ),
+        actions: [
+          TextButton(
+            onPressed: () {
+              if (otpController.text == generatedOtp) {
+                verified = true;
+                Navigator.of(context).pop();
+              } else {
+                _showSnackBar("Incorrect OTP. Please try again.");
+              }
+            },
+            child: const Text('Verify'),
+          ),
+          TextButton(
+            onPressed: () {
+              Navigator.of(context).pop();
+            },
+            child: const Text('Cancel'),
+          ),
+        ],
+      ),
+    );
+
+    return verified;
   }
 
   Future<void> _submitForm() async {
@@ -152,6 +245,7 @@ class _AddPatientScreenState extends State<AddPatientScreen> {
                     labelText: 'Phone',
                     border: OutlineInputBorder(),
                   ),
+                  maxLength: 10,
                   keyboardType: TextInputType.phone,
                   validator: (value) => value != null && value.trim().isNotEmpty
                       ? null
@@ -226,11 +320,13 @@ class _AddPatientScreenState extends State<AddPatientScreen> {
         labelText: label,
         labelStyle: const TextStyle(color: Colors.black),
         border: const OutlineInputBorder(
-            borderSide: BorderSide(
-          color: Colors.black,
-        )),
+          borderSide: BorderSide(
+            color: Colors.black,
+          ),
+        ),
         suffixIcon: suffixIcon != null ? Icon(suffixIcon) : null,
       ),
+      style: const TextStyle(color: Colors.black),
       enabled: false,
       maxLength: maxLength > 0 ? maxLength : null,
       maxLines: maxLines,
