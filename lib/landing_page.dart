@@ -3,7 +3,6 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:sih/screens/admin/admin_login_screen.dart';
 import 'package:sih/screens/admin/dist_state/ds_admin_main.dart';
 import 'package:sih/screens/admin/sub_dist/admin_main_screen.dart';
-import 'package:sih/screens/admin/super/super_admin_home.dart';
 import 'package:sih/screens/admin/super/super_admin_main.dart';
 import 'package:sih/screens/hospital/login_screen.dart';
 import 'package:sih/screens/hospital/main_screen.dart';
