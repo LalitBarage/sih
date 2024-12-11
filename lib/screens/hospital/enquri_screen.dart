@@ -1,6 +1,10 @@
+import 'dart:convert';
+import 'dart:math';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:http/http.dart' as http;
 
 class EnquriScreen extends StatefulWidget {
   const EnquriScreen({super.key});
@@ -16,58 +20,32 @@ class _EnquriScreenState extends State<EnquriScreen> {
   final dobController = TextEditingController();
   final genderController = TextEditingController();
   final diseaseController = TextEditingController();
+  final _otpController = TextEditingController();
 
   final _formKey = GlobalKey<FormState>();
   final _secureStorage = const FlutterSecureStorage();
+  String? _generatedOtp;
 
-  Future<void> fetchAndFillData() async {
-    final aadhaar = aadhaarController.text;
-    if (aadhaar.isEmpty || aadhaar.length != 12) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Enter a valid Aadhaar number')),
-      );
-      return;
-    }
-
+  Future<void> _fetchAndFillData() async {
     try {
       final response = await Supabase.instance.client
           .from('patients')
-          .select('name, phone_no, dob, gender')
-          .eq('aadhaar_no', aadhaar)
+          .select('name, phone_no, dob, gender, address')
+          .eq('aadhaar_no', aadhaarController.text)
           .maybeSingle();
 
-      if (response == null) {
-        showDialog(
-          context: context,
-          builder: (BuildContext context) {
-            return AlertDialog(
-              title: const Text('Not Found'),
-              content: const Text(
-                  'Patient not found.\nPlease register patient first!!!!!!'),
-              actions: <Widget>[
-                TextButton(
-                  onPressed: () async {
-                    Navigator.of(context).pop(); // Close the dialog
-                  },
-                  child: const Text('OK'),
-                ),
-              ],
-            );
-          },
-        );
+      if (response != null) {
+        setState(() {
+          nameController.text = response['name'] ?? '';
+          phoneController.text = response['phone_no'] ?? '';
+          dobController.text = response['dob'] ?? '';
+          genderController.text = response['gender'] ?? '';
+        });
+      } else {
+        _showSnackBar('No patient data found');
       }
-
-      setState(() {
-        nameController.text = response?['name'] ?? '';
-        phoneController.text = response?['phone_no'] ?? '';
-        dobController.text = response?['dob'] ?? '';
-        genderController.text = response?['gender'] ?? '';
-      });
     } catch (e) {
-      print('Error: $e');
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error: $e')),
-      );
+      _showSnackBar('Error fetching data: $e');
     }
   }
 
@@ -124,6 +102,118 @@ class _EnquriScreenState extends State<EnquriScreen> {
     }
   }
 
+  String _generateOtp() {
+    return (Random().nextInt(900000) + 100000).toString();
+  }
+
+  Future<void> _showOtpDialog() async {
+    if (aadhaarController.text.length != 12) {
+      _showSnackBar('Please enter a valid Aadhaar number');
+      return;
+    }
+
+    try {
+      final response = await Supabase.instance.client
+          .from('patients')
+          .select('phone_no')
+          .eq('aadhaar_no', aadhaarController.text)
+          .maybeSingle();
+
+      if (response == null || response['phone_no'] == null) {
+        _showSnackBar('No phone number found for the given Aadhaar number');
+        return;
+      }
+
+      final phoneNumber = response['phone_no'];
+      _generatedOtp = _generateOtp();
+
+      await _sendOtp(phoneNumber, _generatedOtp!);
+      _showOtpVerificationDialog(phoneNumber);
+    } catch (e) {
+      _showSnackBar('Error sending OTP: $e');
+    }
+  }
+
+  void _showOtpVerificationDialog(String phoneNumber) {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (_) => AlertDialog(
+        title: const Text('Verify OTP'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text('An OTP has been sent to $phoneNumber'),
+            const SizedBox(height: 10),
+            TextFormField(
+              controller: _otpController,
+              decoration: const InputDecoration(
+                labelText: 'Enter OTP',
+                border: OutlineInputBorder(),
+              ),
+              keyboardType: TextInputType.number,
+              maxLength: 6,
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () async {
+              await _verifyOtp();
+              Navigator.of(context).pop();
+            },
+            child: const Text('Verify'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('Cancel'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _verifyOtp() async {
+    if (_otpController.text != _generatedOtp) {
+      _showSnackBar('Invalid OTP');
+    } else {
+      _showSnackBar('OTP Verified Successfully');
+      _fetchAndFillData();
+    }
+  }
+
+  void _showSnackBar(String message) {
+    ScaffoldMessenger.of(context)
+        .showSnackBar(SnackBar(content: Text(message)));
+  }
+
+  Future<void> _sendOtp(String phoneNumber, String otp) async {
+    try {
+      final fullPhoneNo = '+91$phoneNumber';
+      const accountSid = 'AC3cdaec33a058556db5e2cb6457de79da';
+      const authToken = 'f8e7881f68241ea146b8ee64ffada91c';
+      const fromPhoneNumber = '+17754588201';
+
+      final twilioUrl =
+          'https://api.twilio.com/2010-04-01/Accounts/$accountSid/Messages.json';
+
+      await http.post(
+        Uri.parse(twilioUrl),
+        headers: {
+          'Authorization':
+              'Basic ${base64Encode(utf8.encode('$accountSid:$authToken'))}',
+        },
+        body: {
+          'To': fullPhoneNo,
+          'From': fromPhoneNumber,
+          'Body': 'Your OTP is $otp. Please do not share it with anyone.',
+        },
+      );
+    } catch (e) {
+      throw Exception('Error sending OTP: $e');
+    }
+  }
+
   void _clearFields() {
     nameController.clear();
     aadhaarController.clear();
@@ -169,7 +259,7 @@ class _EnquriScreenState extends State<EnquriScreen> {
                 ),
                 const SizedBox(height: 20),
                 ElevatedButton(
-                  onPressed: fetchAndFillData,
+                  onPressed: _showOtpDialog,
                   child: const Text('Fetch Details'),
                 ),
                 const SizedBox(height: 20),

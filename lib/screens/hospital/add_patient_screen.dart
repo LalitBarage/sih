@@ -39,22 +39,35 @@ class _AddPatientScreenState extends State<AddPatientScreen> {
       return;
     }
 
-    // Generate and send OTP
-    final String otp = _generateOTP();
-    final otpSent = await _sendOtp(phone: phone, otp: otp);
-    if (!otpSent) {
-      _showSnackBar("Failed to send OTP. Please try again.");
-      return;
-    }
-
-    // Show OTP dialog for verification
-    final otpVerified = await _showOtpDialog(otp);
-    if (!otpVerified) {
-      _showSnackBar("OTP verification failed. Please try again.");
-      return;
-    }
-
+    // Check if the user already exists in the 'patients' table
     try {
+      final List<dynamic> patientResponse = await Supabase.instance.client
+          .from('patients')
+          .select('id')
+          .eq('phone_no', phone);
+
+      if (patientResponse.isNotEmpty) {
+        // User already exists in the 'patients' table
+        _showSnackBar("This user already exists in the system.");
+        return;
+      }
+
+      // Generate and send OTP if user doesn't exist in patients table
+      final String otp = _generateOTP();
+      final otpSent = await _sendOtp(phone: phone, otp: otp);
+      if (!otpSent) {
+        _showSnackBar("Failed to send OTP. Please try again.");
+        return;
+      }
+
+      // Show OTP dialog for verification
+      final otpVerified = await _showOtpDialog(otp);
+      if (!otpVerified) {
+        _showSnackBar("OTP verification failed. Please try again.");
+        return;
+      }
+
+      // Fetch details from the 'aadhaar_api' table if user doesn't exist in 'patients'
       final List<dynamic> response = await Supabase.instance.client
           .from('aadhaar_api')
           .select('id, name, dob, gender, address, adhar_no, pincode')
@@ -73,6 +86,7 @@ class _AddPatientScreenState extends State<AddPatientScreen> {
           _pincodeController.text = user['pincode'] ?? '';
         });
       } else {
+        // Multiple users found, show a dialog to select one
         showDialog(
           context: context,
           builder: (context) => AlertDialog(
