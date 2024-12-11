@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
@@ -89,13 +91,13 @@ class _ApplySchemeScreenState extends State<ApplySchemeScreen> {
     }
 
     try {
-      // Step 1: Fetch the user ID from secure storage.
+      // Fetch the user ID from secure storage.
       final userId = await _secureStorage.read(key: 'userId');
       if (userId == null) {
         throw Exception('User ID not found in secure storage');
       }
 
-      // Step 2: Retrieve `sub_dist`, `dist`, and `state` from the `hospitals` table.
+      // Retrieve `sub_dist`, `dist`, and `state` from the `hospitals` table.
       final hospitalResponse = await Supabase.instance.client
           .from('hospitals')
           .select('sub_dist, dist, state')
@@ -106,6 +108,7 @@ class _ApplySchemeScreenState extends State<ApplySchemeScreen> {
       final district = hospitalResponse['dist'] ?? '';
       final state = hospitalResponse['state'] ?? '';
 
+      // Insert data into the `applied_schemes` table
       final response =
           await Supabase.instance.client.from('applied_schemes').insert({
         'aadhaar_no': aadhaarController.text,
@@ -118,6 +121,9 @@ class _ApplySchemeScreenState extends State<ApplySchemeScreen> {
         'sub_dist': subDistrict,
         'dist': district,
         'state': state,
+        'income_certificate':
+            _selectedIncomeCertificate, // Income certificate URL
+        'bill': _selectedBill, // Bill URL
       });
 
       if (response is PostgrestException) {
@@ -151,15 +157,45 @@ class _ApplySchemeScreenState extends State<ApplySchemeScreen> {
     }
   }
 
-  Future<void> _pickIncomeCertifiicate() async {
+  Future<void> _pickIncomeCertificate() async {
     final result = await FilePicker.platform.pickFiles(
       type: FileType.custom,
       allowedExtensions: ['pdf'],
     );
     if (result != null) {
-      setState(() {
-        _selectedIncomeCertificate = result.files.single.path;
-      });
+      final filePath = result.files.single.path;
+      if (filePath != null) {
+        try {
+          // Read file as Uint8List
+          final fileBytes = await File(filePath).readAsBytes();
+          final fileName = 'income_certificates/${result.files.single.name}';
+
+          // Upload file to Supabase Storage
+          // ignore: unused_local_variable
+          final response = await Supabase.instance.client.storage
+              .from('documents') // Replace with your bucket name
+              .uploadBinary(fileName, fileBytes);
+
+          // Get public URL for the uploaded file
+          final fileUrl = Supabase.instance.client.storage
+              .from('documents')
+              .getPublicUrl(fileName);
+
+          setState(() {
+            _selectedIncomeCertificate = fileUrl;
+          });
+
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+                content: Text('Income certificate uploaded successfully!')),
+          );
+        } catch (e) {
+          print('Error uploading income certificate: $e');
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Error uploading income certificate: $e')),
+          );
+        }
+      }
     }
   }
 
@@ -169,15 +205,46 @@ class _ApplySchemeScreenState extends State<ApplySchemeScreen> {
       allowedExtensions: ['pdf'],
     );
     if (result != null) {
-      setState(() {
-        _selectedBill = result.files.single.path;
-      });
+      final filePath = result.files.single.path;
+      if (filePath != null) {
+        try {
+          // Read file as Uint8List
+          final fileBytes = await File(filePath).readAsBytes();
+          final fileName = 'bills/${result.files.single.name}';
+
+          // Upload file to Supabase Storage
+          // ignore: unused_local_variable
+          final response = await Supabase.instance.client.storage
+              .from('documents') // Replace with your bucket name
+              .uploadBinary(fileName, fileBytes);
+
+          // Get public URL for the uploaded file
+          final fileUrl = Supabase.instance.client.storage
+              .from('documents')
+              .getPublicUrl(fileName);
+
+          setState(() {
+            _selectedBill = fileUrl;
+          });
+
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Bill uploaded successfully!')),
+          );
+        } catch (e) {
+          print('Error uploading bill: $e');
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Error uploading bill: $e')),
+          );
+        }
+      }
     }
   }
 
   void _clearTextfield() {
     setState(() {
       selectedScheme = null;
+      _selectedIncomeCertificate = null; // Clear income certificate selection
+      _selectedBill = null; // Clear bill selection
     });
 
     nameController.clear();
@@ -329,7 +396,7 @@ class _ApplySchemeScreenState extends State<ApplySchemeScreen> {
                 ),
                 const SizedBox(height: 20),
                 ElevatedButton(
-                  onPressed: _pickIncomeCertifiicate,
+                  onPressed: _pickIncomeCertificate,
                   child: const Text('Upload Income Certificate'),
                 ),
                 if (_selectedIncomeCertificate != null)

@@ -2,6 +2,7 @@ import 'dart:convert';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:sih/screens/admin/sub_dist/certificate_screen.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:http/http.dart' as http;
 
@@ -136,6 +137,7 @@ class _AuthApplySchemeState extends State<AuthApplyScheme> {
   }
 
   @override
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
       body: _isLoading
@@ -150,14 +152,51 @@ class _AuthApplySchemeState extends State<AuthApplyScheme> {
                     margin: const EdgeInsets.symmetric(vertical: 8.0),
                     child: ListTile(
                       title: Row(
-                        mainAxisAlignment: MainAxisAlignment.start,
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
                           Text(request['name'] ?? 'Unknown Name'),
-                          const Spacer(),
-                          const SizedBox(width: 5),
                           ElevatedButton(
                             onPressed: () => _verifySchemes(request['id']),
                             child: const Text('Verify'),
+                          ),
+                        ],
+                      ),
+                      subtitle: Row(
+                        children: [
+                          ElevatedButton(
+                            onPressed: () {
+                              if (request['income_certificate'] != null) {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) => PDFViewScreen(
+                                      pdfUrl: request['income_certificate'],
+                                    ),
+                                  ),
+                                );
+                              } else {
+                                _showError('Income certificate not available.');
+                              }
+                            },
+                            child: const Text('View Income Certificate'),
+                          ),
+                          const SizedBox(width: 8),
+                          ElevatedButton(
+                            onPressed: () {
+                              if (request['bill'] != null) {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) => PDFViewScreen(
+                                      pdfUrl: request['bill'],
+                                    ),
+                                  ),
+                                );
+                              } else {
+                                _showError('Bill not available.');
+                              }
+                            },
+                            child: const Text('View Bill'),
                           ),
                         ],
                       ),

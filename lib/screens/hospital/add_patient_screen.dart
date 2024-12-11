@@ -224,9 +224,14 @@ class _AddPatientScreenState extends State<AddPatientScreen> {
       controller: controller,
       decoration: InputDecoration(
         labelText: label,
-        border: const OutlineInputBorder(),
+        labelStyle: const TextStyle(color: Colors.black),
+        border: const OutlineInputBorder(
+            borderSide: BorderSide(
+          color: Colors.black,
+        )),
         suffixIcon: suffixIcon != null ? Icon(suffixIcon) : null,
       ),
+      enabled: false,
       maxLength: maxLength > 0 ? maxLength : null,
       maxLines: maxLines,
       keyboardType: keyboardType,

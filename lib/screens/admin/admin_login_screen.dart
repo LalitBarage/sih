@@ -1,6 +1,7 @@
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:sih/screens/admin/dist_state/ds_admin_main.dart';
 import 'package:sih/screens/admin/sub_dist/admin_main_screen.dart';
+import 'package:sih/screens/admin/super/super_admin_main.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:flutter/material.dart';
 
@@ -72,6 +73,18 @@ class _AdminLoginScreenState extends State<AdminLoginScreen> {
               context,
               MaterialPageRoute(
                 builder: (context) => const DsAdminMain(),
+              ), // Replace with Dist/State role screen
+              (route) => false,
+            );
+          } else if (role == 'super') {
+            await _secureStorage.write(
+                key: 'adminId', value: response['id'].toString());
+            await _secureStorage.write(
+                key: 'role', value: response['role'].toString());
+            Navigator.pushAndRemoveUntil(
+              context,
+              MaterialPageRoute(
+                builder: (context) => const SuperAdminMain(),
               ), // Replace with Dist/State role screen
               (route) => false,
             );

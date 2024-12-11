@@ -2,32 +2,34 @@ import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:iconsax/iconsax.dart';
 import 'package:sih/landing_page.dart';
-import 'package:sih/screens/admin/dist_state/ds_admin_home.dart';
-import 'package:sih/screens/admin/dist_state/ds_admin_scheme.dart';
+import 'package:sih/screens/admin/super/super_admin_addscheme.dart';
+import 'package:sih/screens/admin/super/super_admin_home.dart';
+import 'package:sih/screens/admin/super/super_admin_report.dart';
 
-class DsAdminMain extends StatefulWidget {
-  const DsAdminMain({super.key});
+class SuperAdminMain extends StatefulWidget {
+  const SuperAdminMain({super.key});
 
   @override
-  State<DsAdminMain> createState() => _DsAdminMainState();
+  State<SuperAdminMain> createState() => _SuperAdminMainState();
 }
 
-class _DsAdminMainState extends State<DsAdminMain> {
+class _SuperAdminMainState extends State<SuperAdminMain> {
   int _selectedIndex = 0;
   final _secureStorage = const FlutterSecureStorage();
 
   // List of pages for each tab
   static const List<Widget> _pages = <Widget>[
-    DSAdminHome(),
+    SuperAdminHome(),
     Center(child: Text('Alert')),
-    DSSchemesHome(),
-    Center(child: Text('Report')),
+    SuperAdminScheme(),
+    SuperAdminAddScheme(),
   ];
 
   static const List<String> _pagesTitle = <String>[
     'Disease Report',
     'Alert Generation',
     'Scheme Report',
+    'Add Scheme',
   ];
 
   void _onItemTapped(int index) {
@@ -113,6 +115,10 @@ class _DsAdminMainState extends State<DsAdminMain> {
           ),
           BottomNavigationBarItem(
             icon: Icon(Iconsax.note),
+            label: 'Scheme',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Iconsax.add),
             label: 'Scheme',
           ),
         ],
