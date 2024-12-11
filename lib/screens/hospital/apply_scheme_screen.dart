@@ -55,7 +55,7 @@ class _ApplySchemeScreenState extends State<ApplySchemeScreen> {
           .from('patients')
           .select('name, phone_no, dob, gender, address')
           .eq('aadhaar_no', aadhaar)
-          .single();
+          .maybeSingle();
 
       // ignore: unnecessary_null_comparison
       if (response != null) {

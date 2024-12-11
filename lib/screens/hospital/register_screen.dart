@@ -278,7 +278,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 const SizedBox(height: 16),
                 ElevatedButton(
                   onPressed: _pickPdf,
-                  child: const Text('Upload Certificate'),
+                  child: const Text('Upload NABH Certificate'),
                 ),
                 if (_selectedPdfPath != null)
                   Padding(

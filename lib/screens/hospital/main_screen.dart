@@ -24,7 +24,6 @@ class _MainScreenState extends State<MainScreen> {
     AddPatientScreen(),
     EnquriScreen(),
     ApplySchemeScreen(),
-    Center(child: Text('Setting Page')),
   ];
 
   static const List<String> _pagesTitle = <String>[
@@ -32,7 +31,6 @@ class _MainScreenState extends State<MainScreen> {
     'Add Patient',
     'Add Enquiry',
     'Apply Scheme',
-    'Setting'
   ];
 
   void _onItemTapped(int index) {
@@ -123,10 +121,6 @@ class _MainScreenState extends State<MainScreen> {
           BottomNavigationBarItem(
             icon: Icon(Iconsax.book),
             label: 'Scheme',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Iconsax.setting),
-            label: 'Setting',
           ),
         ],
       ),

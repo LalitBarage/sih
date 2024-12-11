@@ -410,22 +410,14 @@ class DiseaseLineChart extends StatelessWidget {
           ),
           lineBarsData: [
             LineChartBarData(
-              isCurved: true,
-              color: Colors.blue, // Solid color for the line
+              isCurved: false,
+              color: Colors.purple, // Solid color for the line
               spots: filteredData
                   .map((e) => FlSpot(
                         filteredData.indexOf(e).toDouble(),
                         e['count'].toDouble(),
                       ))
                   .toList(),
-              belowBarData: BarAreaData(
-                show: true,
-                gradient: const LinearGradient(
-                  colors: [Colors.blue, Colors.purple],
-                  begin: Alignment.topCenter,
-                  end: Alignment.bottomCenter,
-                ),
-              ), // Add gradient below the line
             ),
           ],
         ),

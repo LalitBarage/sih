@@ -418,22 +418,14 @@ class SchemeLineChart extends StatelessWidget {
           ),
           lineBarsData: [
             LineChartBarData(
-              isCurved: true,
-              color: Colors.blue,
+              isCurved: false,
+              color: Colors.purple,
               spots: filteredData
                   .map((e) => FlSpot(
                         filteredData.indexOf(e).toDouble(),
                         e['count'].toDouble(),
                       ))
                   .toList(),
-              belowBarData: BarAreaData(
-                show: true,
-                gradient: const LinearGradient(
-                  colors: [Colors.blue, Colors.purple],
-                  begin: Alignment.topCenter,
-                  end: Alignment.bottomCenter,
-                ),
-              ),
             ),
           ],
         ),
