@@ -1,3 +1,4 @@
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -19,6 +20,8 @@ class _ApplySchemeScreenState extends State<ApplySchemeScreen> {
 
   final _formKey = GlobalKey<FormState>();
   final _secureStorage = const FlutterSecureStorage();
+  String? _selectedIncomeCertificate;
+  String? _selectedBill;
 
   String? selectedScheme;
   List<String> schemes = [];
@@ -145,6 +148,30 @@ class _ApplySchemeScreenState extends State<ApplySchemeScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Error submitting form: $e')),
       );
+    }
+  }
+
+  Future<void> _pickIncomeCertifiicate() async {
+    final result = await FilePicker.platform.pickFiles(
+      type: FileType.custom,
+      allowedExtensions: ['pdf'],
+    );
+    if (result != null) {
+      setState(() {
+        _selectedIncomeCertificate = result.files.single.path;
+      });
+    }
+  }
+
+  Future<void> _pickBill() async {
+    final result = await FilePicker.platform.pickFiles(
+      type: FileType.custom,
+      allowedExtensions: ['pdf'],
+    );
+    if (result != null) {
+      setState(() {
+        _selectedBill = result.files.single.path;
+      });
     }
   }
 
@@ -300,6 +327,32 @@ class _ApplySchemeScreenState extends State<ApplySchemeScreen> {
                   enabled: false,
                   style: const TextStyle(color: Colors.black),
                 ),
+                const SizedBox(height: 20),
+                ElevatedButton(
+                  onPressed: _pickIncomeCertifiicate,
+                  child: const Text('Upload Income Certificate'),
+                ),
+                if (_selectedIncomeCertificate != null)
+                  Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 8.0),
+                    child: Text(
+                      'Selected PDF: ${_selectedIncomeCertificate!.split('/').last}',
+                      style: const TextStyle(fontSize: 14, color: Colors.black),
+                    ),
+                  ),
+                const SizedBox(height: 20),
+                ElevatedButton(
+                  onPressed: _pickBill,
+                  child: const Text('Upload Bill'),
+                ),
+                if (_selectedBill != null)
+                  Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 8.0),
+                    child: Text(
+                      'Selected PDF: ${_selectedBill!.split('/').last}',
+                      style: const TextStyle(fontSize: 14, color: Colors.black),
+                    ),
+                  ),
                 const SizedBox(height: 20),
                 ElevatedButton(
                   onPressed: submitForm,
