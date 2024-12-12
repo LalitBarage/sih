@@ -158,15 +158,15 @@ class _EnquriScreenState extends State<EnquriScreen> {
         ),
         actions: [
           TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
             onPressed: () async {
               await _verifyOtp();
               Navigator.of(context).pop();
             },
             child: const Text('Verify'),
-          ),
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(),
-            child: const Text('Cancel'),
           ),
         ],
       ),

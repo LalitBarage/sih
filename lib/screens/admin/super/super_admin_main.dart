@@ -3,6 +3,7 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:iconsax/iconsax.dart';
 import 'package:sih/landing_page.dart';
 import 'package:sih/screens/admin/super/super_admin_addscheme.dart';
+import 'package:sih/screens/admin/super/super_admin_banner.dart';
 import 'package:sih/screens/admin/super/super_admin_home.dart';
 import 'package:sih/screens/admin/super/super_admin_report.dart';
 
@@ -18,11 +19,12 @@ class _SuperAdminMainState extends State<SuperAdminMain> {
   final _secureStorage = const FlutterSecureStorage();
 
   // List of pages for each tab
-  static const List<Widget> _pages = <Widget>[
-    SuperAdminHome(),
-    Center(child: Text('Alert')),
-    SuperAdminScheme(),
-    SuperAdminAddScheme(),
+  static final List<Widget> _pages = <Widget>[
+    const SuperAdminHome(),
+    const Center(child: Text('Alert')),
+    const SuperAdminScheme(),
+    const SuperAdminAddScheme(),
+    UploadBannerScreen(),
   ];
 
   static const List<String> _pagesTitle = <String>[
@@ -30,6 +32,7 @@ class _SuperAdminMainState extends State<SuperAdminMain> {
     'Alert Generation',
     'Scheme Report',
     'Add Scheme',
+    'Add Banner',
   ];
 
   void _onItemTapped(int index) {
@@ -120,6 +123,10 @@ class _SuperAdminMainState extends State<SuperAdminMain> {
           BottomNavigationBarItem(
             icon: Icon(Iconsax.add),
             label: 'Scheme',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Iconsax.image),
+            label: 'Banner',
           ),
         ],
       ),

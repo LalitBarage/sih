@@ -6,6 +6,7 @@ import 'package:sih/screens/admin/sub_dist/admin_home.dart';
 import 'package:sih/screens/admin/sub_dist/admin_report.dart';
 import 'package:sih/screens/admin/sub_dist/auth_apply_scheme.dart';
 import 'package:sih/screens/admin/sub_dist/auth_hospitals.dart';
+import 'package:sih/screens/admin/sub_dist/campaign_screen.dart';
 
 class AdminMainScreen extends StatefulWidget {
   const AdminMainScreen({super.key});
@@ -19,11 +20,12 @@ class _AdminMainScreenState extends State<AdminMainScreen> {
   final _secureStorage = const FlutterSecureStorage();
 
   // List of pages for each tab
-  static const List<Widget> _pages = <Widget>[
-    AdminHome(),
-    AuthHospitals(),
-    AuthApplyScheme(),
-    AdminScheme(),
+  static List<Widget> _pages = <Widget>[
+    const AdminHome(),
+    const AuthHospitals(),
+    const AuthApplyScheme(),
+    const AdminScheme(),
+    CampaignPage(),
   ];
 
   static const List<String> _pagesTitle = <String>[
@@ -31,6 +33,7 @@ class _AdminMainScreenState extends State<AdminMainScreen> {
     'Requested Hospital',
     'Requested Patient',
     'Growth',
+    'Campaign'
   ];
 
   void _onItemTapped(int index) {
@@ -121,6 +124,10 @@ class _AdminMainScreenState extends State<AdminMainScreen> {
           BottomNavigationBarItem(
             icon: Icon(Iconsax.trend_up),
             label: 'Growth',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Iconsax.health),
+            label: 'Campaign',
           ),
         ],
       ),

@@ -14,17 +14,38 @@ class _HomeScreenState extends State<HomeScreen> {
   List<Map<String, dynamic>> _schemes = [];
   bool _isLoading = false;
   int _currentPage = 0;
-  final List<String> _images = [
-    'https://via.placeholder.com/600x300/FF0000/FFFFFF?text=Banner+1',
-    'https://via.placeholder.com/600x300/00FF00/FFFFFF?text=Banner+2',
-    'https://via.placeholder.com/600x300/0000FF/FFFFFF?text=Banner+3',
-  ];
+  List<Map<String, dynamic>> _banners = [];
+  // ignore: unused_field
+  bool _isBannerLoading = false;
 
   @override
   void initState() {
     super.initState();
     _autoSlide();
     _fetchSchemes();
+    _fetchBanners();
+  }
+
+  Future<void> _fetchBanners() async {
+    setState(() {
+      _isBannerLoading = true;
+    });
+
+    try {
+      final response = await _supabase.from('banner').select('id, banner_url');
+
+      setState(() {
+        _banners = (response as List<dynamic>)
+            .map((banner) => banner as Map<String, dynamic>)
+            .toList();
+      });
+    } catch (e) {
+      _showError("Error fetching banners: $e");
+    } finally {
+      setState(() {
+        _isBannerLoading = false;
+      });
+    }
   }
 
   Future<void> _fetchSchemes() async {
@@ -61,7 +82,7 @@ class _HomeScreenState extends State<HomeScreen> {
     Future.delayed(const Duration(seconds: 3), () {
       if (_pageController.hasClients) {
         setState(() {
-          _currentPage = (_currentPage + 1) % _images.length;
+          _currentPage = (_currentPage + 1) % _banners.length;
         });
         _pageController.animateToPage(
           _currentPage,
@@ -93,7 +114,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 height: 200,
                 child: PageView.builder(
                   controller: _pageController,
-                  itemCount: _images.length,
+                  itemCount: _banners.length,
                   onPageChanged: (index) {
                     setState(() {
                       _currentPage = index;
@@ -101,7 +122,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   },
                   itemBuilder: (context, index) {
                     return Image.network(
-                      _images[index],
+                      _banners[index]['banner_url'],
                       fit: BoxFit.cover,
                     );
                   },

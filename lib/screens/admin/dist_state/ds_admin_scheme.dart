@@ -413,7 +413,7 @@ class SchemeLineChart extends StatelessWidget {
                   (data[index]['count'] as int).toDouble(),
                 ),
               ),
-              isCurved: true,
+              isCurved: false,
               barWidth: 4,
               dotData: const FlDotData(show: true),
               belowBarData: BarAreaData(

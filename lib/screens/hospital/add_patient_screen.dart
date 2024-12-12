@@ -39,89 +39,203 @@ class _AddPatientScreenState extends State<AddPatientScreen> {
       return;
     }
 
-    // Check if the user already exists in the 'patients' table
     try {
-      final List<dynamic> patientResponse = await Supabase.instance.client
-          .from('patients')
-          .select('id')
-          .eq('phone_no', phone);
-
-      if (patientResponse.isNotEmpty) {
-        // User already exists in the 'patients' table
-        _showSnackBar("This user already exists in the system.");
-        return;
-      }
-
-      // Generate and send OTP if user doesn't exist in patients table
-      final String otp = _generateOTP();
-      final otpSent = await _sendOtp(phone: phone, otp: otp);
-      if (!otpSent) {
-        _showSnackBar("Failed to send OTP. Please try again.");
-        return;
-      }
-
-      // Show OTP dialog for verification
-      final otpVerified = await _showOtpDialog(otp);
-      if (!otpVerified) {
-        _showSnackBar("OTP verification failed. Please try again.");
-        return;
-      }
-
-      // Fetch details from the 'aadhaar_api' table if user doesn't exist in 'patients'
+      // Fetch multiple Aadhaar details for the phone number
       final List<dynamic> response = await Supabase.instance.client
           .from('aadhaar_api')
-          .select('id, name, dob, gender, address, adhar_no, pincode')
+          .select('id, name, dob, gender, address, adhar_no, pincode, phone_no')
           .eq('phone_no', phone);
 
       if (response.isEmpty) {
         _showSnackBar("No details found for this phone number");
-      } else if (response.length == 1) {
-        final user = response[0];
-        setState(() {
-          _patientNameController.text = user['name'] ?? '';
-          _dobController.text = user['dob'] ?? '';
-          _genderController.text = user['gender'] ?? '';
-          _addressController.text = user['address'] ?? '';
-          _aadhaarController.text = user['adhar_no'] ?? '';
-          _pincodeController.text = user['pincode'] ?? '';
-        });
+        return;
+      }
+
+      // Check for Aadhaar numbers in the 'patients' table
+      final List aadhaarNumbers =
+          response.map((user) => user['adhar_no']).toList();
+      List<String> availableAadhaar = [];
+
+      for (var aadhaar in aadhaarNumbers) {
+        final diseaseResponse = await Supabase.instance.client
+            .from('patients')
+            .select('aadhaar_no')
+            .eq('aadhaar_no', aadhaar);
+
+        if (diseaseResponse.isEmpty) {
+          availableAadhaar
+              .add(aadhaar); // This Aadhaar is not in the disease table
+        }
+      }
+
+      if (availableAadhaar.isEmpty) {
+        _showSnackBar("Both Aadhaar numbers are already exists.");
+        return;
+      }
+
+      // If there are multiple Aadhaar numbers, show them to the user for selection
+      if (availableAadhaar.length > 1) {
+        _showAadhaarSelectionDialog(availableAadhaar, response);
       } else {
-        // Multiple users found, show a dialog to select one
-        showDialog(
-          context: context,
-          builder: (context) => AlertDialog(
-            title: const Text('Select User'),
-            content: SizedBox(
-              width: double.maxFinite,
-              child: ListView.builder(
-                shrinkWrap: true,
-                itemCount: response.length,
-                itemBuilder: (context, index) {
-                  final user = response[index];
-                  return ListTile(
-                    title: Text(user['name'] ?? 'Unknown'),
-                    subtitle: Text('Aadhaar: ${user['adhar_no'] ?? 'N/A'}'),
-                    onTap: () {
-                      setState(() {
-                        _patientNameController.text = user['name'] ?? '';
-                        _dobController.text = user['dob'] ?? '';
-                        _genderController.text = user['gender'] ?? '';
-                        _addressController.text = user['address'] ?? '';
-                        _aadhaarController.text = user['adhar_no'] ?? '';
-                        _pincodeController.text = user['pincode'] ?? '';
-                      });
-                      Navigator.of(context).pop();
-                    },
-                  );
-                },
-              ),
-            ),
-          ),
-        );
+        // If only one Aadhaar is available, show that automatically
+        final selectedUser = response.firstWhere((user) =>
+            user['adhar_no'] == availableAadhaar.first); // Get the user object
+        // Generate OTP and send it first before displaying Aadhaar details
+        final String otp = _generateOTP();
+        final otpSent = await _sendOtp(phone: phone, otp: otp);
+        if (!otpSent) {
+          _showSnackBar("Failed to send OTP. Please try again.");
+          return;
+        }
+
+        // Show OTP dialog for verification (this blocks the UI)
+        final otpVerified = await _showOtpDialog(otp);
+        if (!otpVerified) {
+          _showSnackBar("OTP verification failed. Please try again.");
+          return;
+        }
+
+        // Now, after OTP is verified, set the Aadhaar details
+        _setAadhaarDetails(selectedUser);
+
+        // Proceed with saving patient details to the database after OTP verification
+        await _submitForm();
       }
     } catch (error) {
       _showSnackBar("Error fetching details: $error");
     }
+  }
+
+  void _setAadhaarDetails(dynamic user) {
+    setState(() {
+      _patientNameController.text =
+          user['name'] ?? ''; // Default to empty string if null
+      _dobController.text = user['dob'] ?? '';
+      _genderController.text = user['gender'] ?? '';
+      _addressController.text = user['address'] ?? '';
+      _aadhaarController.text = user['adhar_no'] ?? '';
+      _pincodeController.text = user['pincode'] ?? '';
+    });
+  }
+
+  Future<bool> _showOtpDialog(String generatedOtp) async {
+    final TextEditingController otpController = TextEditingController();
+    bool verified = false;
+
+    // Show OTP dialog and block the UI until verification is done
+    await showDialog(
+      context: context,
+      barrierDismissible: false, // Prevent closing without verification
+      builder: (context) => AlertDialog(
+        title: const Text('OTP Verification'),
+        content: TextFormField(
+          controller: otpController,
+          decoration: const InputDecoration(labelText: 'Enter OTP'),
+          keyboardType: TextInputType.number,
+          maxLength: 6,
+        ),
+        actions: [
+          TextButton(
+            onPressed: () {
+              Navigator.of(context).pop();
+            },
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () {
+              if (otpController.text == generatedOtp) {
+                verified = true;
+                Navigator.of(context).pop();
+              } else {
+                _showSnackBar("Incorrect OTP. Please try again.");
+              }
+            },
+            child: const Text('Verify'),
+          ),
+        ],
+      ),
+    );
+
+    return verified;
+  }
+
+  void _showAadhaarSelectionDialog(
+      List<String> availableAadhaar, List<dynamic> response) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Select Aadhaar Number'),
+        content: ListView.builder(
+          shrinkWrap: true,
+          itemCount: availableAadhaar.length,
+          itemBuilder: (context, index) {
+            final aadhaar = availableAadhaar[index];
+            return ListTile(
+              title: Text(aadhaar),
+              onTap: () async {
+                final selectedAadhaar = aadhaar;
+                final user = response
+                    .firstWhere((user) => user['adhar_no'] == selectedAadhaar);
+                _setAadhaarDetails(user);
+
+                // Generate OTP and send it
+                final String otp = _generateOTP();
+                final otpSent =
+                    await _sendOtp(phone: user['phone_no'], otp: otp);
+                if (!otpSent) {
+                  _showSnackBar("Failed to send OTP. Please try again.");
+                  return;
+                }
+
+                // Show OTP dialog for verification
+                final otpVerified = await _showOtpDialog(otp);
+                if (!otpVerified) {
+                  _showSnackBar("OTP verification failed. Please try again.");
+                  return;
+                }
+
+                Navigator.of(context).pop();
+                await _submitForm();
+              },
+            );
+          },
+        ),
+      ),
+    );
+  }
+
+  void _showMultipleUsersDialog(List<dynamic> response) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Multiple Users Found'),
+        content: SizedBox(
+          width: double.maxFinite,
+          child: ListView.builder(
+            shrinkWrap: true,
+            itemCount: response.length,
+            itemBuilder: (context, index) {
+              final user = response[index];
+              return ListTile(
+                title: Text(user['name'] ?? 'Unknown'),
+                subtitle: Text('Phone: ${user['phone_no'] ?? 'N/A'}'),
+                onTap: () {
+                  setState(() {
+                    _patientNameController.text = user['name'] ?? '';
+                    _dobController.text = user['dob'] ?? '';
+                    _genderController.text = user['gender'] ?? '';
+                    _addressController.text = user['address'] ?? '';
+                    _aadhaarController.text = user['adhar_no'] ?? '';
+                    _pincodeController.text = user['pincode'] ?? '';
+                  });
+                  Navigator.of(context).pop();
+                },
+              );
+            },
+          ),
+        ),
+      ),
+    );
   }
 
   String _generateOTP() {
@@ -158,46 +272,6 @@ class _AddPatientScreenState extends State<AddPatientScreen> {
     return Future.delayed(const Duration(seconds: 1), () => true);
   }
 
-  Future<bool> _showOtpDialog(String generatedOtp) async {
-    final TextEditingController otpController = TextEditingController();
-    bool verified = false;
-
-    await showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (context) => AlertDialog(
-        title: const Text('OTP Verification'),
-        content: TextFormField(
-          controller: otpController,
-          decoration: const InputDecoration(labelText: 'Enter OTP'),
-          keyboardType: TextInputType.number,
-          maxLength: 6,
-        ),
-        actions: [
-          TextButton(
-            onPressed: () {
-              if (otpController.text == generatedOtp) {
-                verified = true;
-                Navigator.of(context).pop();
-              } else {
-                _showSnackBar("Incorrect OTP. Please try again.");
-              }
-            },
-            child: const Text('Verify'),
-          ),
-          TextButton(
-            onPressed: () {
-              Navigator.of(context).pop();
-            },
-            child: const Text('Cancel'),
-          ),
-        ],
-      ),
-    );
-
-    return verified;
-  }
-
   Future<void> _submitForm() async {
     if (!_formKey.currentState!.validate()) {
       _showSnackBar('Please fill all required fields.');
@@ -207,6 +281,26 @@ class _AddPatientScreenState extends State<AddPatientScreen> {
     _showLoadingIndicator();
 
     try {
+      final pincode = _pincodeController.text.trim();
+      final locationResponse = await http.get(
+        Uri.parse('https://api.postalpincode.in/pincode/$pincode'),
+      );
+
+      if (locationResponse.statusCode != 200) {
+        throw Exception('Failed to fetch location details');
+      }
+
+      final locationData = jsonDecode(locationResponse.body);
+      if (locationData == null ||
+          locationData.isEmpty ||
+          locationData[0]['Status'] != 'Success') {
+        throw Exception('Invalid pincode or no data available');
+      }
+
+      final postOffice = locationData[0]['PostOffice'][0];
+      final subDistrict = postOffice['Block'] ?? '';
+      final district = postOffice['District'] ?? '';
+      final state = postOffice['State'] ?? '';
       final supabase = Supabase.instance.client;
 
       await supabase.from('patients').insert([
@@ -218,6 +312,9 @@ class _AddPatientScreenState extends State<AddPatientScreen> {
           'address': _addressController.text.trim(),
           'gender': _genderController.text.trim(),
           'pincode': _pincodeController.text.trim(),
+          'sub-dist': subDistrict,
+          'dist': district,
+          'state': state,
         }
       ]);
 
