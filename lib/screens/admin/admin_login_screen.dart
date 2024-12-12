@@ -27,8 +27,9 @@ class _AdminLoginScreenState extends State<AdminLoginScreen> {
   bool _isOtpFieldVisible = false;
   String? _generatedOtp;
 
-  final String sendgridApiKey = 'YOUR_SENDGRID_API_KEY';
-  final String fromEmail = 'your_verified_email@example.com';
+  final String sendgridApiKey =
+      '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';
+  final String fromEmail = 'bhuwad.atharva@gmail.com';
 
   Future<void> _submitForm() async {
     if (_formKey.currentState?.validate() ?? false) {
@@ -78,7 +79,7 @@ class _AdminLoginScreenState extends State<AdminLoginScreen> {
       'Authorization': 'Bearer $sendgridApiKey',
       'Content-Type': 'application/json',
     };
-
+    print(otp);
     final emailBody = {
       'personalizations': [
         {
