@@ -196,6 +196,7 @@ class _ApplySchemeScreenState extends State<ApplySchemeScreen> {
       final supabase = Supabase.instance.client;
       // Fetch user ID from secure storage
       final userId = await _secureStorage.read(key: 'userId');
+      print(userId);
       if (userId == null)
         throw Exception('User ID not found in secure storage');
 

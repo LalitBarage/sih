@@ -65,6 +65,7 @@ class _LoginScreenState extends State<LoginScreen> {
           if (password == dbPassword) {
             // Store the user email for OTP verification later
             _userEmail = response['email'];
+            adminId = response['id'].toString();
 
             // Generate and send OTP
             _otp = generateOtp();
@@ -152,7 +153,15 @@ class _LoginScreenState extends State<LoginScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('OTP verified successfully!')),
       );
-      await _secureStorage.write(key: 'userId', value: adminId.toString());
+
+      // Ensure adminId is converted to string if it's not already a string
+      if (adminId != null) {
+        await _secureStorage.write(key: 'userId', value: adminId.toString());
+      } else {
+        _showErrorDialog("Admin ID is not available.");
+        return;
+      }
+
       // Navigate to the main screen after successful OTP verification
       Navigator.pushAndRemoveUntil(
         context,
