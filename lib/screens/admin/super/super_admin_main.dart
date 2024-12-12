@@ -21,7 +21,6 @@ class _SuperAdminMainState extends State<SuperAdminMain> {
   // List of pages for each tab
   static final List<Widget> _pages = <Widget>[
     const SuperAdminHome(),
-    const Center(child: Text('Alert')),
     const SuperAdminScheme(),
     const SuperAdminAddScheme(),
     UploadBannerScreen(),
@@ -29,7 +28,6 @@ class _SuperAdminMainState extends State<SuperAdminMain> {
 
   static const List<String> _pagesTitle = <String>[
     'Disease Report',
-    'Alert Generation',
     'Scheme Report',
     'Add Scheme',
     'Add Banner',
@@ -111,10 +109,6 @@ class _SuperAdminMainState extends State<SuperAdminMain> {
           BottomNavigationBarItem(
             icon: Icon(Iconsax.home),
             label: 'Home',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Iconsax.notification),
-            label: 'Alert',
           ),
           BottomNavigationBarItem(
             icon: Icon(Iconsax.note),

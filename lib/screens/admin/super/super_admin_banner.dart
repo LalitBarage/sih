@@ -24,6 +24,7 @@ class _UploadBannerScreenState extends State<UploadBannerScreen> {
   Future<void> _fetchPhotos() async {
     try {
       final response = await _supabase.from('banner').select();
+      // ignore: unnecessary_null_comparison
       if (response != null) {
         setState(() {
           _photos = List<Map<String, dynamic>>.from(response);
@@ -54,6 +55,7 @@ class _UploadBannerScreenState extends State<UploadBannerScreen> {
       // Upload the image to Supabase storage
       final Uint8List fileBytes = await image.readAsBytes(); // Fixed
       final fileName = '${DateTime.now().millisecondsSinceEpoch}_${image.name}';
+      // ignore: unused_local_variable
       final response = await _supabase.storage
           .from('documents')
           .uploadBinary(fileName, fileBytes);
