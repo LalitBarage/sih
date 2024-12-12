@@ -5,6 +5,7 @@ import 'package:sih/landing_page.dart';
 import 'package:sih/screens/admin/dist_state/campaign_screen.dart';
 import 'package:sih/screens/admin/dist_state/ds_admin_home.dart';
 import 'package:sih/screens/admin/dist_state/ds_admin_scheme.dart';
+import 'package:sih/screens/admin/dist_state/ds_alert_page.dart';
 
 class DsAdminMain extends StatefulWidget {
   const DsAdminMain({super.key});
@@ -22,12 +23,14 @@ class _DsAdminMainState extends State<DsAdminMain> {
     DSAdminHome(),
     CampaignPage(),
     DSSchemesHome(),
+    AlertPage()
   ];
 
   static const List<String> _pagesTitle = <String>[
     'Disease Report',
     'Campaign',
     'Scheme Report',
+    'Alert'
   ];
 
   void _onItemTapped(int index) {
@@ -108,12 +111,16 @@ class _DsAdminMainState extends State<DsAdminMain> {
             label: 'Home',
           ),
           BottomNavigationBarItem(
-            icon: Icon(Iconsax.notification),
+            icon: Icon(Iconsax.shield),
             label: 'Campaign',
           ),
           BottomNavigationBarItem(
             icon: Icon(Iconsax.note),
             label: 'Scheme',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Iconsax.notification),
+            label: 'Alert',
           ),
         ],
       ),

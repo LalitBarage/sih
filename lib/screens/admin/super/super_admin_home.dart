@@ -1,17 +1,17 @@
 import 'package:flutter/material.dart';
-import 'package:fl_chart/fl_chart.dart';
-import 'package:intl/intl.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:intl/intl.dart';
+import 'package:fl_chart/fl_chart.dart';
 
-class SuperAdminHome extends StatefulWidget {
-  const SuperAdminHome({Key? key}) : super(key: key);
+class SuperAdminDiseases extends StatefulWidget {
+  const SuperAdminDiseases({Key? key}) : super(key: key);
 
   @override
-  State<SuperAdminHome> createState() => _SuperAdminHomeState();
+  State<SuperAdminDiseases> createState() => _SuperAdminDiseasesState();
 }
 
-class _SuperAdminHomeState extends State<SuperAdminHome> {
-  late Future<Map<String, int>> _patientDataFuture;
+class _SuperAdminDiseasesState extends State<SuperAdminDiseases> {
+  late Future<Map<String, int>> _diseaseDataFuture;
   String? selectedDisease;
   List<Map<String, dynamic>> lineChartData = [];
   int totalDiseases = 0;
@@ -19,13 +19,14 @@ class _SuperAdminHomeState extends State<SuperAdminHome> {
   @override
   void initState() {
     super.initState();
-    _patientDataFuture = fetchPatientDataFromSupabase();
+    _diseaseDataFuture = fetchDiseaseDataFromSupabase();
   }
 
-  Future<Map<String, int>> fetchPatientDataFromSupabase() async {
+  Future<Map<String, int>> fetchDiseaseDataFromSupabase() async {
+    // Fetch all disease data for the last 8 days
     final eightDaysAgo = DateTime.now().subtract(const Duration(days: 8));
     final response = await Supabase.instance.client
-        .from('diseases')
+        .from('diseases') // Change to the appropriate table name
         .select('disease, created_at')
         .gte('created_at', eightDaysAgo.toIso8601String());
 
@@ -43,9 +44,10 @@ class _SuperAdminHomeState extends State<SuperAdminHome> {
   }
 
   Future<List<Map<String, dynamic>>> fetchDiseaseTrend(String disease) async {
+    // Fetch trend data for a specific disease over the last 8 days
     final eightDaysAgo = DateTime.now().subtract(const Duration(days: 8));
     final response = await Supabase.instance.client
-        .from('diseases')
+        .from('diseases') // Adjust table name here if needed
         .select('created_at')
         .eq('disease', disease)
         .gte('created_at', eightDaysAgo.toIso8601String())
@@ -53,15 +55,18 @@ class _SuperAdminHomeState extends State<SuperAdminHome> {
 
     final data = response as List<dynamic>;
 
+    // Prepare date range for the last 8 days
     Map<String, int> trendData = {};
     DateTime startDate = DateTime.now().subtract(const Duration(days: 8));
 
+    // Initialize trend data map with 0 counts for each day
     for (int i = 0; i <= 8; i++) {
       final date =
           startDate.add(Duration(days: i)).toIso8601String().split('T').first;
       trendData[date] = 0;
     }
 
+    // Count occurrences for each date in the fetched data
     for (var entry in data) {
       final date = (entry['created_at'] as String).split('T').first;
       trendData[date] = (trendData[date] ?? 0) + 1;
@@ -80,7 +85,7 @@ class _SuperAdminHomeState extends State<SuperAdminHome> {
         child: Padding(
           padding: const EdgeInsets.all(8.0),
           child: FutureBuilder<Map<String, int>>(
-            future: _patientDataFuture,
+            future: _diseaseDataFuture,
             builder: (context, snapshot) {
               if (snapshot.connectionState == ConnectionState.waiting) {
                 return const Center(child: CircularProgressIndicator());
@@ -116,7 +121,7 @@ class _SuperAdminHomeState extends State<SuperAdminHome> {
                               ),
                               const SizedBox(height: 8),
                               Text(
-                                'Total Patients Recorded: $totalDiseases',
+                                'Total Diseases Reported: $totalDiseases',
                                 style: const TextStyle(
                                     fontSize: 16, color: Colors.black54),
                               ),
@@ -154,7 +159,9 @@ class _SuperAdminHomeState extends State<SuperAdminHome> {
                             color: Colors.black87),
                       ),
                       const SizedBox(height: 16),
-                      DiseasesChart(diseaseData: data),
+                      DiseasesChart(
+                        diseaseData: data,
+                      ),
                       const SizedBox(height: 16),
 
                       // Divider
@@ -239,10 +246,9 @@ class DiseasesChart extends StatelessWidget {
         BarChartData(
           gridData: const FlGridData(show: true),
           borderData: FlBorderData(
-            show: true,
-            border: const Border.symmetric(
-                horizontal: BorderSide(color: Colors.grey)),
-          ),
+              show: true,
+              border: const Border.symmetric(
+                  horizontal: BorderSide(color: Colors.grey))),
           titlesData: FlTitlesData(
             leftTitles: AxisTitles(
               sideTitles: SideTitles(
@@ -271,10 +277,12 @@ class DiseasesChart extends StatelessWidget {
                 },
               ),
             ),
-            rightTitles:
-                const AxisTitles(sideTitles: SideTitles(showTitles: false)),
-            topTitles:
-                const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+            rightTitles: const AxisTitles(
+              sideTitles: SideTitles(showTitles: false),
+            ),
+            topTitles: const AxisTitles(
+              sideTitles: SideTitles(showTitles: false),
+            ),
           ),
           barGroups: diseaseData.entries
               .map(
@@ -290,7 +298,7 @@ class DiseasesChart extends StatelessWidget {
                         end: Alignment.topCenter,
                       ),
                       borderRadius: BorderRadius.circular(8),
-                    ),
+                    )
                   ],
                 ),
               )
@@ -361,15 +369,17 @@ class DiseaseLineChart extends StatelessWidget {
                 },
               ),
             ),
-            rightTitles:
-                const AxisTitles(sideTitles: SideTitles(showTitles: false)),
-            topTitles:
-                const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+            rightTitles: const AxisTitles(
+              sideTitles: SideTitles(showTitles: false),
+            ),
+            topTitles: const AxisTitles(
+              sideTitles: SideTitles(showTitles: false),
+            ),
           ),
           lineBarsData: [
             LineChartBarData(
               isCurved: false,
-              color: Colors.purple, // Solid color for the line
+              color: Colors.purple,
               spots: filteredData
                   .map((e) => FlSpot(
                         filteredData.indexOf(e).toDouble(),

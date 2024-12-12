@@ -20,7 +20,7 @@ class _SuperAdminMainState extends State<SuperAdminMain> {
 
   // List of pages for each tab
   static final List<Widget> _pages = <Widget>[
-    const SuperAdminHome(),
+    const SuperAdminDiseases(),
     const SuperAdminScheme(),
     const SuperAdminAddScheme(),
     UploadBannerScreen(),
