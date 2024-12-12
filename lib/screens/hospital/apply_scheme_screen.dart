@@ -46,9 +46,11 @@ class _ApplySchemeScreenState extends State<ApplySchemeScreen> {
           await Supabase.instance.client.from('schemes').select('scheme_name');
 
       setState(() {
+        // Use a Set to automatically remove duplicates
         _schemes = List<String>.from(
           (response as List<dynamic>)
-              .map((row) => row['scheme_name'].toString()),
+              .map((row) => row['scheme_name'].toString())
+              .toSet(), // Convert the list to a Set to remove duplicates
         );
       });
     } catch (e) {
