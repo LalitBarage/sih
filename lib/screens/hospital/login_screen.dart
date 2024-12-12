@@ -23,6 +23,7 @@ class _LoginScreenState extends State<LoginScreen> {
   final _otpController = TextEditingController();
 
   bool _isPasswordVisible = false;
+  // ignore: unused_field
   bool _isOtpVisible = false;
   bool _isOtpSent = false; // Track OTP sent status
 

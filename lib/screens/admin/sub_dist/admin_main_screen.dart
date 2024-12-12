@@ -6,7 +6,7 @@ import 'package:sih/screens/admin/sub_dist/admin_home.dart';
 import 'package:sih/screens/admin/sub_dist/admin_report.dart';
 import 'package:sih/screens/admin/sub_dist/auth_apply_scheme.dart';
 import 'package:sih/screens/admin/sub_dist/auth_hospitals.dart';
-import 'package:sih/screens/admin/sub_dist/campaign_screen.dart';
+import 'package:sih/screens/admin/dist_state/campaign_screen.dart';
 
 class AdminMainScreen extends StatefulWidget {
   const AdminMainScreen({super.key});

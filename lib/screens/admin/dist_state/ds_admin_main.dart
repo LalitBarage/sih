@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:iconsax/iconsax.dart';
 import 'package:sih/landing_page.dart';
+import 'package:sih/screens/admin/dist_state/campaign_screen.dart';
 import 'package:sih/screens/admin/dist_state/ds_admin_home.dart';
 import 'package:sih/screens/admin/dist_state/ds_admin_scheme.dart';
 
@@ -17,16 +18,15 @@ class _DsAdminMainState extends State<DsAdminMain> {
   final _secureStorage = const FlutterSecureStorage();
 
   // List of pages for each tab
-  static const List<Widget> _pages = <Widget>[
+  static List<Widget> _pages = <Widget>[
     DSAdminHome(),
-    Center(child: Text('Alert')),
+    CampaignPage(),
     DSSchemesHome(),
-    Center(child: Text('Report')),
   ];
 
   static const List<String> _pagesTitle = <String>[
     'Disease Report',
-    'Alert Generation',
+    'Campaign',
     'Scheme Report',
   ];
 
@@ -109,7 +109,7 @@ class _DsAdminMainState extends State<DsAdminMain> {
           ),
           BottomNavigationBarItem(
             icon: Icon(Iconsax.notification),
-            label: 'Alert',
+            label: 'Campaign',
           ),
           BottomNavigationBarItem(
             icon: Icon(Iconsax.note),
