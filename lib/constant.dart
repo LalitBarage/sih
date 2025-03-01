@@ -1,3 +1,3 @@
 const supabase_url = 'https://fzkhfjucxpuykpqwhxnq.supabase.co';
 const supabase_key =
-    'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZ6a2hmanVjeHB1eWtwcXdoeG5xIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzI1NDQ2MzMsImV4cCI6MjA0ODEyMDYzM30.jBQfXvTaKtHJqm_AhhdIGYaHLUKqWQYOtEycJQlJKbk';
+    'your key';
